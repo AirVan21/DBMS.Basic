@@ -8,6 +8,8 @@ import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
 
+import javax.swing.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +24,7 @@ public class TableManager implements ITableManager {
     final String dirPath;
     final IBufferManager bufferManager;
 
-    TableManager(Integer maxPagesCount, String dirPath) {
+    public TableManager(Integer maxPagesCount, String dirPath) {
         this.maxPagesCount = maxPagesCount;
         this.dirPath = dirPath;
         this.bufferManager = new HeapBufferManager(maxPagesCount);
@@ -33,11 +35,17 @@ public class TableManager implements ITableManager {
         Table newTable = new Table(tableName, columns);
         tablesMap.put(tableName, newTable);
         String fileName = generateFileName(tableName);
-        bufferManager.createTable(fileName, newTable);
+
+        // TODO: rewrite awful exception handling routing
+        try {
+            bufferManager.createTable(fileName, newTable);
+        } catch (IOException e) {
+            System.out.println("Something wrong with table creation!");
+        }
     }
 
     String generateFileName(String tableName) {
-        return tableName+".ndb";
+        return dirPath + tableName + ".ndb";
     }
 
     @Override

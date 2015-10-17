@@ -15,7 +15,7 @@ public class Type {
         this.params = params;
     }
 
-    Type(BaseType baseType)
+    public Type(BaseType baseType)
     {
         this(baseType, null);
     }

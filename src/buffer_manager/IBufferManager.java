@@ -5,6 +5,8 @@ import common.Condition;
 import common.table_classes.Page;
 import common.table_classes.Table;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -15,7 +17,7 @@ public interface IBufferManager {
 
     void insert(Table table, List<Column> columns, Condition assignments);
 
-    void createTable(String fileName, Table table);
+    void createTable(String fileName, Table table) throws IOException;
 
     //Main
     // |

@@ -8,7 +8,6 @@ import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,14 +37,14 @@ public class TableManager implements ITableManager {
 
         // TODO: rewrite awful exception handling routing
         try {
-            bufferManager.createTable(fileName, newTable);
+            bufferManager.createTable(dirPath, fileName, newTable);
         } catch (IOException e) {
             System.out.println("Something wrong with table creation!");
         }
     }
 
     String generateFileName(String tableName) {
-        return dirPath + tableName + ".ndb";
+        return tableName + ".ndb";
     }
 
     @Override

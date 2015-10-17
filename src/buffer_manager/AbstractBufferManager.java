@@ -12,15 +12,12 @@ import java.util.List;
 public abstract class AbstractBufferManager implements IBufferManager {
     final Integer PAGE_SIZE = 4 * 1024;
     final Integer maxPagesCount;
-    final String filePath;
     List<IBufferManager> bufferManagerList;
     Table table;
 
-    public AbstractBufferManager(Integer maxPagesCount, String filePath, Table table)
+    public AbstractBufferManager(Integer maxPagesCount)
     {
         this.maxPagesCount = maxPagesCount;
-        this.filePath = filePath;
-        this.table = table;
     }
 
     Integer getMaxPageCount() { return maxPagesCount; }

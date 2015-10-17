@@ -13,27 +13,30 @@ import java.util.List;
  */
 public class HeapBufferManager extends AbstractBufferManager {
     List<Page> fullPages;
+
+    @Override
+    public void createTable(String fileName, Table table) {
+        // TODO: create file for current table
+        // TODO: update sys.tables file
+        // TODO: update cached sys.table file (INFO: sys.table file is XML (tableName + path structure)
+    }
+
     List<Page> incompletePages;
 
     @Override
-    public void insert(List<Column> columns, Condition assignments) {
+    public void insert(Table table, List<Column> columns, Condition assignments) {
+        // TODO: find table name through XML sys.table
         throw new NotImplementedException();
     }
 
-    @Override
-    public void storeTable() {
-        throw new NotImplementedException();
-        /*TODO: generate a table with filled header
-                register in sys.table and flush it*/
-    }
-
-    public HeapBufferManager(Integer maxPagesCount, String filePath, Table table) {
-        super(maxPagesCount, filePath, table);
+    public HeapBufferManager(Integer maxPagesCount) {
+        super(maxPagesCount);
     }
 
 
     @Override
-    public List<Page> getPages(Condition condition) {
+    public List<Page> getPages(Table table, Condition condition) {
+        // TODO: pages which
         throw new NotImplementedException();
     }
 }

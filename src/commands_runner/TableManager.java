@@ -17,14 +17,15 @@ import java.util.Map;
  * Created by semionn on 09.10.15.
  */
 public class TableManager implements ITableManager {
-    Map<Table, IBufferManager> tablesBufferMap = new HashMap<>();
     Map<String, Table> tablesMap = new HashMap<>();
     final Integer maxPagesCount;
     final String dirPath;
+    final IBufferManager bufferManager;
 
     TableManager(Integer maxPagesCount, String dirPath) {
         this.maxPagesCount = maxPagesCount;
         this.dirPath = dirPath;
+        this.bufferManager = new HeapBufferManager(maxPagesCount);
     }
 
     @Override
@@ -32,9 +33,7 @@ public class TableManager implements ITableManager {
         Table newTable = new Table(tableName, columns);
         tablesMap.put(tableName, newTable);
         String fileName = generateFileName(tableName);
-        IBufferManager bufferManager = new HeapBufferManager(maxPagesCount, fileName, newTable);
-        tablesBufferMap.put(newTable, bufferManager);
-        bufferManager.storeTable();
+        bufferManager.createTable(fileName, newTable);
     }
 
     String generateFileName(String tableName) {
@@ -47,9 +46,7 @@ public class TableManager implements ITableManager {
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        IBufferManager bufferManager = tablesBufferMap.get(table);
-
-        bufferManager.insert(columns, assignments);
+        bufferManager.insert(table, columns, assignments);
     }
 
     @Override
@@ -58,9 +55,9 @@ public class TableManager implements ITableManager {
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        IBufferManager bufferManager = tablesBufferMap.get(table);
         condition.normalize(table);
-        List<Page> pages = bufferManager.getPages(condition);
+        // Uses condition for complicated selects all over several tables
+        List<Page> pages = bufferManager.getPages(table, condition);
         List<Record> result = new ArrayList<>();
         for (Page page : pages) {
             result.addAll(page.getRecords(condition));

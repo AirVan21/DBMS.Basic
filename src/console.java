@@ -7,5 +7,4 @@ public class console {
     public static void main( final String[] args ){
         System.out.println("Hello DBMS!");
     }
-
 }

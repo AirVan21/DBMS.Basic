@@ -10,17 +10,16 @@ import java.util.List;
  * Created by semionn on 09.10.15.
  */
 public abstract class AbstractBufferManager implements IBufferManager {
+    // KBytes
     final Integer PAGE_SIZE = 4 * 1024;
+    // Up to 256 Pages
     final Integer maxPagesCount;
-    final String filePath;
+    // Buffer managers with different structure
     List<IBufferManager> bufferManagerList;
-    Table table;
 
-    public AbstractBufferManager(Integer maxPagesCount, String filePath, Table table)
+    public AbstractBufferManager(Integer maxPagesCount)
     {
         this.maxPagesCount = maxPagesCount;
-        this.filePath = filePath;
-        this.table = table;
     }
 
     Integer getMaxPageCount() { return maxPagesCount; }

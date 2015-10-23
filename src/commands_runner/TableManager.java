@@ -8,6 +8,7 @@ import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,14 +18,15 @@ import java.util.Map;
  * Created by semionn on 09.10.15.
  */
 public class TableManager implements ITableManager {
-    Map<Table, IBufferManager> tablesBufferMap = new HashMap<>();
     Map<String, Table> tablesMap = new HashMap<>();
     final Integer maxPagesCount;
     final String dirPath;
+    final IBufferManager bufferManager;
 
-    TableManager(Integer maxPagesCount, String dirPath) {
+    public TableManager(Integer maxPagesCount, String dirPath) {
         this.maxPagesCount = maxPagesCount;
         this.dirPath = dirPath;
+        this.bufferManager = new HeapBufferManager(maxPagesCount);
     }
 
     @Override
@@ -32,13 +34,17 @@ public class TableManager implements ITableManager {
         Table newTable = new Table(tableName, columns);
         tablesMap.put(tableName, newTable);
         String fileName = generateFileName(tableName);
-        IBufferManager bufferManager = new HeapBufferManager(maxPagesCount, fileName, newTable);
-        tablesBufferMap.put(newTable, bufferManager);
-        bufferManager.storeTable();
+
+        // TODO: rewrite awful exception handling routing
+        try {
+            bufferManager.createTable(dirPath, fileName, newTable);
+        } catch (IOException e) {
+            System.out.println("Something wrong with table creation!");
+        }
     }
 
     String generateFileName(String tableName) {
-        return tableName+".ndb";
+        return tableName + ".ndb";
     }
 
     @Override
@@ -47,9 +53,7 @@ public class TableManager implements ITableManager {
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        IBufferManager bufferManager = tablesBufferMap.get(table);
-
-        bufferManager.insert(columns, assignments);
+        bufferManager.insert(table, columns, assignments);
     }
 
     @Override
@@ -58,9 +62,9 @@ public class TableManager implements ITableManager {
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        IBufferManager bufferManager = tablesBufferMap.get(table);
         condition.normalize(table);
-        List<Page> pages = bufferManager.getPages(condition);
+        // Uses condition for complicated selects all over several tables
+        List<Page> pages = bufferManager.getPages(table, condition);
         List<Record> result = new ArrayList<>();
         for (Page page : pages) {
             result.addAll(page.getRecords(condition));

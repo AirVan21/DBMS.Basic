@@ -10,7 +10,7 @@ import java.util.List;
  * Created by semionn on 09.10.15.
  */
 public class Page {
-    Integer index; //?
+    Integer pageId; //?
     Integer pinCount;
     Boolean deleted;
     Boolean dirty;

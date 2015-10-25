@@ -43,10 +43,27 @@ public class XMLBuilder {
         }
     }
 
+    public void addRecord(String inTableName, String inTablePath)
+    {
+        // "table" record as a root element
+        Element rootElement = sysTable.createElement("table");
+        sysTable.appendChild(rootElement);
+
+        // "name"  field in table record
+        Element tableName = sysTable.createElement("name");
+        tableName.appendChild(sysTable.createTextNode(inTableName));
+        rootElement.appendChild(tableName);
+
+        // "path" field in table record
+        Element tablePath = sysTable.createElement("path");
+        tablePath.appendChild(sysTable.createTextNode(inTablePath));
+        rootElement.appendChild(tablePath);
+    }
+
     /*
         Stores Sys.Database XML file on HDD
      */
-    private void storeXMLDocument()
+    public void storeXMLDocument()
     {
         try {
 

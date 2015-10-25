@@ -34,13 +34,7 @@ public class TableManager implements ITableManager {
         Table newTable = new Table(tableName, columns);
         tablesMap.put(tableName, newTable);
         String fileName = generateFileName(tableName);
-
-        // TODO: rewrite awful exception handling routing
-        try {
-            bufferManager.createTable(dirPath, fileName, newTable);
-        } catch (IOException e) {
-            System.out.println("Something wrong with table creation!");
-        }
+        bufferManager.createTable(dirPath, fileName, newTable);
     }
 
     String generateFileName(String tableName) {

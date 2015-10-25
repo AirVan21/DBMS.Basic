@@ -17,7 +17,7 @@ public interface IBufferManager {
 
     void insert(Table table, List<Column> columns, Condition assignments);
 
-    void createTable(String directory, String fileName, Table table) throws IOException;
+    void createTable(String directory, String fileName, Table table);
 
     //Main
     // |

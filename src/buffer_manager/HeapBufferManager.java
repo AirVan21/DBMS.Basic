@@ -20,6 +20,7 @@ import java.util.Map;
  * Created by semionn on 09.10.15.
  */
 public class HeapBufferManager extends AbstractBufferManager {
+
     List<Page> fullPages;
     List<Page> incompletePages;
     XMLBuilder sysTable;
@@ -32,12 +33,14 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public void createTable(String directory, String tableName, Table table) throws IOException {
+    public void createTable(String directory, String tableName, Table table) {
+        // Creating new table
         File tableFile = createTableFile(directory, tableName);
         defaultTableFilling(tableFile, table);
-        // TODO: update cached sys.table file (INFO: sys.table file is XML (tableName + path structure)
+        // Modify Sys Table
         String pathToTable = Paths.get(directory + tableName).toAbsolutePath().toString();
-        // TODO: update sys.tables file
+        //sysTable.addRecord(tableName, pathToTable);
+        sysTable.storeXMLDocument();
     }
 
     @Override
@@ -73,13 +76,19 @@ public class HeapBufferManager extends AbstractBufferManager {
     /*
         Creates serializable page with meta-info and writs int to tableFile
      */
-    private void defaultTableFilling(File tableFile, Table table) throws IOException {
-        FileOutputStream fileOutput = new FileOutputStream(tableFile);
-        ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
-        // Using Serializable MataPage representation
-        MetaPage defaultPage = new MetaPage(table.getColumns());
-        objectOutput.writeObject(defaultPage);
-        objectOutput.flush();
-        objectOutput.close();
+    private void defaultTableFilling(File tableFile, Table table) {
+        try {
+            FileOutputStream fileOutput = new FileOutputStream(tableFile);
+            ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
+            // Using Serializable MataPage representation
+            MetaPage defaultPage = new MetaPage(table.getColumns());
+            objectOutput.writeObject(defaultPage);
+            objectOutput.flush();
+            objectOutput.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

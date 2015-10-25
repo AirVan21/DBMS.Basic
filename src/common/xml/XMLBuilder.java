@@ -13,7 +13,10 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -22,73 +25,101 @@ import java.nio.file.Paths;
  */
 public class XMLBuilder {
 
-    public XMLBuilder(String path) {
-        this.pathToXML = path;
-        createXMLDocument();
-        /*
-        File XMLFile = new File(path);
-        try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+    /*
+        Handles Sys.Database XML file:
 
-            Document doc = dBuilder.parse(XMLFile);
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            System.out.println("XML Table wasn't found");
-            e.printStackTrace();
-        }*/
+        1) Uploads it from "pathToSysTable" (if it is already exist)
+        2) Creates new Sys.Database XML (if it doesn't exist)
+     */
+    public XMLBuilder(String pathToSysTable) {
+        pathToXML = pathToSysTable;
+        File XMLFile = new File(pathToSysTable);
+
+        if(XMLFile.exists() && !XMLFile.isDirectory()) {
+            uploadXMLDocument(XMLFile);
+        } else {
+            createXMLDocument();
+            storeXMLDocument();
+        }
     }
 
+    /*
+        Stores Sys.Database XML file on HDD
+     */
+    private void storeXMLDocument()
+    {
+        try {
+
+            // Prepare created XML
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(sysTable);
+
+            // Write result to File
+            StreamResult result = new StreamResult(new File(pathToXML));
+            transformer.transform(source, result);
+
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+        Creates Sys.Database XML file from scratch
+     */
     private void createXMLDocument()
     {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
-            Document doc = docBuilder.newDocument();
+            sysTable = docBuilder.newDocument();
 
             // "table" record as a root element
-            Element rootElement = doc.createElement("table");
-            doc.appendChild(rootElement);
+            Element rootElement = sysTable.createElement("table");
+            sysTable.appendChild(rootElement);
 
             // "name"  field in table record
-            Element tableName = doc.createElement("name");
-            tableName.appendChild(doc.createTextNode("root_db"));
+            Element tableName = sysTable.createElement("name");
+            tableName.appendChild(sysTable.createTextNode("root_db"));
             rootElement.appendChild(tableName);
 
             // "path" field in table record
             Path filePath = Paths.get("data//root_db.ndb");
-            Element tablePath = doc.createElement("path");
-            tablePath.appendChild(doc.createTextNode(filePath.toAbsolutePath().toString()));
+            Element tablePath = sysTable.createElement("path");
+            tablePath.appendChild(sysTable.createTextNode(filePath.toAbsolutePath().toString()));
             rootElement.appendChild(tablePath);
 
-            // Write created XML
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(doc);
-
-            //StreamResult result = new StreamResult(new File(pathToXML));
-
-            // Output to console for testing
-            StreamResult result = new StreamResult(System.out);
-
-            transformer.transform(source, result);
-
         } catch (ParserConfigurationException e) {
-            System.out.println("createXMLDocument()");
-            e.printStackTrace();
-        } catch (TransformerConfigurationException e) {
-            System.out.println("createXMLDocument()");
-            e.printStackTrace();
-        } catch (TransformerException e) {
             System.out.println("createXMLDocument()");
             e.printStackTrace();
         }
     }
 
-    private String pathToXML;
+    /*
+        Uploads Sys.Database XML file from HDD
+     */
+    private void uploadXMLDocument(File XMLFile)
+    {
+        try {
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            // Uploads existing Sys.Database XML
+            sysTable = dBuilder.parse(XMLFile);
+
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private String   pathToXML;
+    private Document sysTable;
 
 }

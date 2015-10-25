@@ -7,6 +7,7 @@ import common.table_classes.MetaPage;
 import common.table_classes.Page;
 import common.table_classes.Table;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import common.xml.XMLBuilder;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -21,25 +22,13 @@ import java.util.Map;
 public class HeapBufferManager extends AbstractBufferManager {
     List<Page> fullPages;
     List<Page> incompletePages;
-    // HashMap for talbe + tablePath;
-    Map<String, String> tableToPathMap;
-    // XML file in future
+    XMLBuilder sysTable;
 
     public HeapBufferManager(Integer maxPagesCount) {
         super(maxPagesCount);
-
         // Absolute path for root data base
         Path filePath = Paths.get("data//root_db.ndb");
-        try {
-            FileInputStream fileInput = new FileInputStream(filePath.toAbsolutePath().toString());
-            ObjectInputStream objectInput = new ObjectInputStream(fileInput);
-            // TODO: Reading hash-map from file
-            objectInput.close();
-        } catch (IOException e) {
-            // Create root data base if it doesn't exist
-            System.out.println("Created empty root_db.ndb (in heap)");
-            tableToPathMap = new HashMap<String, String>();
-        }
+        sysTable = new XMLBuilder(filePath.toAbsolutePath().toString());
     }
 
     @Override
@@ -48,7 +37,6 @@ public class HeapBufferManager extends AbstractBufferManager {
         defaultTableFilling(tableFile, table);
         // TODO: update cached sys.table file (INFO: sys.table file is XML (tableName + path structure)
         String pathToTable = Paths.get(directory + tableName).toAbsolutePath().toString();
-        tableToPathMap.put(tableName, pathToTable);
         // TODO: update sys.tables file
     }
 

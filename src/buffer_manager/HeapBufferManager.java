@@ -1,6 +1,5 @@
 package buffer_manager;
 
-import com.sun.corba.se.spi.orbutil.fsm.Input;
 import common.Column;
 import common.Condition;
 import common.table_classes.MetaPage;
@@ -9,12 +8,12 @@ import common.table_classes.Table;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import common.xml.XMLBuilder;
 
+import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * Created by semionn on 09.10.15.
@@ -34,13 +33,18 @@ public class HeapBufferManager extends AbstractBufferManager {
 
     @Override
     public void createTable(String directory, String tableName, Table table) {
-        // Creating new table
-        File tableFile = createTableFile(directory, tableName);
-        defaultTableFilling(tableFile, table);
-        // Modify Sys Table
-        String pathToTable = Paths.get(directory + tableName).toAbsolutePath().toString();
-        //sysTable.addRecord(tableName, pathToTable);
-        sysTable.storeXMLDocument();
+        if (!sysTable.isExist(tableName)) {
+            // Creating new table
+            File tableFile = createTableFile(directory, tableName);
+            defaultTableFilling(tableFile, table);
+            // Modify Sys Table
+            String pathToTable = Paths.get(directory + tableName).toAbsolutePath().toString();
+            sysTable.addRecord(tableName, pathToTable);
+            sysTable.storeXMLDocument();
+        } else {
+            System.out.println("Table name duplication!");
+            // Own exception should be thrown
+        }
     }
 
     @Override

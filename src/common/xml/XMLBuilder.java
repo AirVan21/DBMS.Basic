@@ -13,6 +13,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -29,7 +30,8 @@ public class XMLBuilder {
         Handles Sys.Database XML file:
 
         1) Uploads it from "pathToSysTable" (if it is already exist)
-        2) Creates new Sys.Database XML (if it doesn't exist)
+        2) Creates new Sys.Database XML     (if it doesn't exist)
+
      */
     public XMLBuilder(String pathToSysTable) {
         pathToXML = pathToSysTable;
@@ -43,21 +45,42 @@ public class XMLBuilder {
         }
     }
 
+    /*
+        Check if table with name 'inTableName' already exist
+     */
+    public Boolean isExist(String inTableName){
+
+        NodeList nList = sysTable.getElementsByTagName("name");
+        for (int i = 0; i < nList.getLength(); i++) {
+            String tableName = nList.item(i).getTextContent();
+            if (tableName.equals(inTableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+        Adds description about new table in Sys.Database XML
+    */
     public void addRecord(String inTableName, String inTablePath)
     {
-        // "table" record as a root element
-        Element rootElement = sysTable.createElement("table");
-        sysTable.appendChild(rootElement);
+        // "dbms" is a root element
+        Element rootElement = sysTable.getDocumentElement();
+
+        // "table" record
+        Element sysTableElement = sysTable.createElement("table");
+        rootElement.appendChild(sysTableElement);
 
         // "name"  field in table record
         Element tableName = sysTable.createElement("name");
         tableName.appendChild(sysTable.createTextNode(inTableName));
-        rootElement.appendChild(tableName);
+        sysTableElement.appendChild(tableName);
 
         // "path" field in table record
         Element tablePath = sysTable.createElement("path");
         tablePath.appendChild(sysTable.createTextNode(inTablePath));
-        rootElement.appendChild(tablePath);
+        sysTableElement.appendChild(tablePath);
     }
 
     /*
@@ -66,7 +89,6 @@ public class XMLBuilder {
     public void storeXMLDocument()
     {
         try {
-
             // Prepare created XML
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -94,20 +116,24 @@ public class XMLBuilder {
 
             sysTable = docBuilder.newDocument();
 
-            // "table" record as a root element
-            Element rootElement = sysTable.createElement("table");
+            // "dbms" as a root element
+            Element rootElement = sysTable.createElement("dbms");
             sysTable.appendChild(rootElement);
+
+            // "table" record
+            Element tableElement = sysTable.createElement("table");
+            rootElement.appendChild(tableElement);
 
             // "name"  field in table record
             Element tableName = sysTable.createElement("name");
             tableName.appendChild(sysTable.createTextNode("root_db"));
-            rootElement.appendChild(tableName);
+            tableElement.appendChild(tableName);
 
             // "path" field in table record
             Path filePath = Paths.get("data//root_db.ndb");
             Element tablePath = sysTable.createElement("path");
             tablePath.appendChild(sysTable.createTextNode(filePath.toAbsolutePath().toString()));
-            rootElement.appendChild(tablePath);
+            tableElement.appendChild(tablePath);
 
         } catch (ParserConfigurationException e) {
             System.out.println("createXMLDocument()");
@@ -125,6 +151,7 @@ public class XMLBuilder {
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             // Uploads existing Sys.Database XML
             sysTable = dBuilder.parse(XMLFile);
+            sysTable.getDocumentElement().normalize();
 
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
@@ -133,7 +160,6 @@ public class XMLBuilder {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     private String   pathToXML;

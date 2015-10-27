@@ -20,4 +20,13 @@ public class Type {
         this(baseType, null);
     }
 
+    public static Type createType(String typeName) {
+        for (BaseType baseType : BaseType.values()) {
+            if (typeName == baseType.name) {
+                    return new Type(baseType, null);
+            }
+        }
+        return null;
+    }
+
 }

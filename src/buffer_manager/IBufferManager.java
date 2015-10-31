@@ -1,27 +1,25 @@
 package buffer_manager;
 
 import common.Column;
-import common.Condition;
+import common.conditions.Conditions;
 import common.table_classes.Page;
 import common.table_classes.Table;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 
 /**
  * Created by semionn on 09.10.15.
  */
 public interface IBufferManager {
-    List<Page> getPages(Table table, Condition condition);
+    List<Page> getPages(Table table, Conditions conditions);
 
-    void insert(Table table, List<Column> columns, Condition assignments);
+    void insert(Table table, List<Column> columns, Conditions assignments);
 
-    void createTable(String directory, String fileName, Table table);
+    void createTable(String directory, Table table);
 
     //Main
     // |
-    //->SELECT/INSERT Condition
+    //->SELECT/INSERT Conditions
     // |
     //Table Manager
     // |

@@ -2,14 +2,14 @@ package commands_runner;
 
 import buffer_manager.HeapBufferManager;
 import buffer_manager.IBufferManager;
+import commands_runner.cursors.ICursor;
+import commands_runner.cursors.SimpleCursor;
 import common.Column;
-import common.Condition;
+import common.ColumnSelect;
+import common.conditions.Conditions;
 import common.table_classes.Page;
-import common.table_classes.Record;
 import common.table_classes.Table;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +19,11 @@ import java.util.Map;
  */
 public class TableManager implements ITableManager {
     Map<String, Table> tablesMap = new HashMap<>();
-    final Integer maxPagesCount;
+    final int maxPagesCount;
     final String dirPath;
     final IBufferManager bufferManager;
 
-    public TableManager(Integer maxPagesCount, String dirPath) {
+    public TableManager(int maxPagesCount, String dirPath) {
         this.maxPagesCount = maxPagesCount;
         this.dirPath = dirPath;
         this.bufferManager = new HeapBufferManager(maxPagesCount);
@@ -31,10 +31,10 @@ public class TableManager implements ITableManager {
 
     @Override
     public void createTable(String tableName, List<Column> columns) {
-        Table newTable = new Table(tableName, columns);
-        tablesMap.put(tableName, newTable);
         String fileName = generateFileName(tableName);
-        bufferManager.createTable(dirPath, fileName, newTable);
+        Table newTable = new Table(tableName, fileName, columns);
+        tablesMap.put(tableName, newTable);
+        bufferManager.createTable(dirPath, newTable);
     }
 
     String generateFileName(String tableName) {
@@ -42,7 +42,7 @@ public class TableManager implements ITableManager {
     }
 
     @Override
-    public void insert(String tableName, List<Column> columns, Condition assignments) {
+    public void insert(String tableName, List<Column> columns, Conditions assignments) {
         if (!tablesMap.containsKey(tableName))
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
@@ -51,19 +51,41 @@ public class TableManager implements ITableManager {
     }
 
     @Override
-    public List<Record> select(String tableName, List<Column> columns, Condition condition) {
+    public ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions) {
         if (!tablesMap.containsKey(tableName))
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        condition.normalize(table);
-        // Uses condition for complicated selects all over several tables
-        List<Page> pages = bufferManager.getPages(table, condition);
-        List<Record> result = new ArrayList<>();
-        for (Page page : pages) {
-            result.addAll(page.getRecords(condition));
+        // Uses conditions for complicated selects all over several tables
+        List<Page> pages = bufferManager.getPages(table, conditions);
+        ICursor cursor = createCursor(pages, conditions);
+        return cursor;
+    }
+
+    @Override
+    public Table getTable(String tableName) {
+        if (!tablesMap.containsKey(tableName))
+            return null;
+        return tablesMap.get(tableName);
+    }
+
+    ICursor createCursor(List<Page> pages, Conditions conditions)
+    {
+        Map<String, Table> tables = new HashMap<>();
+        for (Page page : pages)
+        {
+            Table table = page.getTable();
+            if (!tables.containsKey(table.getName())){
+                tables.put(table.getName(), table);
+            }
         }
-        return result;
+
+        ICursor cursor = null;
+
+        if (tables.size() == 1)
+            cursor = new SimpleCursor(pages, pages.get(0).getTable());
+
+        return cursor;
     }
 
 }

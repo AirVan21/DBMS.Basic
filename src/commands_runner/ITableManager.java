@@ -1,9 +1,10 @@
 package commands_runner;
+import commands_runner.cursors.ICursor;
 import common.Column;
-import common.Condition;
-import common.table_classes.Record;
+import common.ColumnSelect;
+import common.conditions.Conditions;
+import common.table_classes.Table;
 
-import java.sql.*;
 import java.util.List;
 
 /**
@@ -11,6 +12,8 @@ import java.util.List;
  */
 public interface ITableManager {
     void createTable(String tableName, List<Column> columns);
-    void insert(String tableName, List<Column> columns, Condition assignments);
-    List<Record> select(String tableName, List<Column> columns, Condition condition);
+    void insert(String tableName, List<Column> columns, Conditions assignments);
+    ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
+
+    Table getTable(String tableName);
 }

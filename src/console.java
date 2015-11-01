@@ -1,9 +1,9 @@
 import commands_runner.TableManager;
-import common.Column;
-import common.Statement;
-import common.Type;
-import common.BaseType;
+import common.*;
+import common.conditions.Conditions;
+import common.exceptions.QueryException;
 import parser.SQLParser;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class console {
         String dbFolder = "data//";
         Integer bufferPoolSize = 512;
         TableManager tableManager = new TableManager(bufferPoolSize, dbFolder);
-        SQLParser sqlParser = new SQLParser();
+        SQLParser sqlParser = new SQLParser(tableManager);
         System.out.println("Hello DBMS!");
 
         testXML(tableManager);
@@ -26,17 +26,25 @@ public class console {
     }
 
     private static void testParser(TableManager tableManager, SQLParser sqlParser) {
-        String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
-        Statement statement = sqlParser.parse(query);
-        switch (statement.getType()) {
-            case CREATE:
-                tableManager.createTable(statement.getStringParam("table_name"),
-                          (List<Column>) statement.getParam("columns"));
-                break;
-            case SELECT:
-                break;
-            case INSERT:
-                break;
+        //String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
+        String query = "Select person.age, person.name from db.person where person.age > 5";
+        try {
+            Statement statement = sqlParser.parse(query);
+            switch (statement.getType()) {
+                case CREATE:
+                    tableManager.createTable(statement.getStringParam("table_name"),
+                            (List<Column>) statement.getParam("columns"));
+                    break;
+                case SELECT:
+                    tableManager.select(statement.getStringParam("table_name"),
+                            (List<ColumnSelect>) statement.getParam("columns"),
+                            (Conditions) statement.getParam("conditions"));
+                    break;
+                case INSERT:
+                    break;
+            }
+        } catch (QueryException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -44,8 +52,10 @@ public class console {
     {
         Type type = new Type(BaseType.INT);
         Column ageColumn = new Column("Age", type);
+        Column nameColumn = new Column("Name", Type.createType("varchar", 20));
         List<Column> columns = new ArrayList<>();
         columns.add(ageColumn);
+        columns.add(nameColumn);
         tableManager.createTable("person", columns);
     }
 

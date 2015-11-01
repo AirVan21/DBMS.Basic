@@ -1,16 +1,17 @@
 package parser;
 
+import commands_runner.ITableManager;
 import common.Statement;
+import common.StatementType;
+import common.exceptions.QueryException;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Vocabulary;
 import parser.sql_antlr.*;
-import sun.misc.IOUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 
 /**
@@ -18,18 +19,26 @@ import java.io.InputStreamReader;
  */
 public class SQLParser implements ISQLParser{
 
-    public Statement parse(String query) {
+    ITableManager tableManager;
+
+    public SQLParser(ITableManager tableManager) {
+        this.tableManager = tableManager;
+    }
+
+    public Statement parse(String query) throws QueryException{
         InputStream is = new ByteArrayInputStream( query.getBytes());
         try {
             CharStream charStream = new ANTLRInputStream(is);
             SQLiteLexer sqLiteLexer = new SQLiteLexer(charStream);
             CommonTokenStream tokens = new CommonTokenStream(sqLiteLexer);
             SQLiteParser parser = new SQLiteParser(tokens);
-            SQL_Listener sql_listener = new SQL_Listener();
+            SQLListener sql_listener = new SQLListener(tableManager);
             parser.addParseListener(sql_listener);
             parser.parse();
+            if (sql_listener.getStatementType() == StatementType.NONE)
+                throw new QueryException();
             return new Statement(sql_listener.getStatementType(), sql_listener.getParams());
-        } catch (Exception e){
+        } catch (IOException e){
 
         }
         return null;

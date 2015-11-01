@@ -1,7 +1,7 @@
 package common.table_classes;
 
-import buffer_manager.IBufferManager;
-import common.Condition;
+import common.conditions.Condition;
+import common.conditions.Conditions;
 
 import java.util.*;
 
@@ -12,13 +12,10 @@ public class Record {
     Integer rid;
     List<Object> values;
 
-    Boolean check(Condition condition) throws IllegalArgumentException {
-        if (!condition.getNormalized()){
-            throw new IllegalArgumentException("condition don't normalized!");
-        }
-        Iterator<Map.Entry<String, Object>> entryIterator = condition.getValues().entrySet().iterator();
-        for (int i = 0; entryIterator.hasNext(); i++) {
-            if (!values.get(i).equals(entryIterator.next().getValue()))
+    Boolean check(Conditions conditions) throws IllegalArgumentException {
+        Iterator<Condition> conditionIterator = conditions.getValues().iterator();
+        for (int i = 0; conditionIterator.hasNext(); i++) {
+            if (!values.get(i).equals(conditionIterator.next().getValue()))
                 return false;
         }
         return true;

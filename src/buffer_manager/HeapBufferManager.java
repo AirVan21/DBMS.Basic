@@ -1,14 +1,13 @@
 package buffer_manager;
 
 import common.Column;
-import common.Condition;
+import common.conditions.Conditions;
 import common.table_classes.MetaPage;
 import common.table_classes.Page;
 import common.table_classes.Table;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import common.xml.XMLBuilder;
 
-import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,14 +31,15 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public void createTable(String directory, String tableName, Table table) {
+    public void createTable(String directory, Table table) {
+        String tableName = table.getName();
+        Path pathToTable = Paths.get(directory + table.getFileName());
         if (!sysTable.isExist(tableName)) {
             // Creating new table
-            File tableFile = createTableFile(directory, tableName);
+            File tableFile = createTableFile(directory, pathToTable);
             defaultTableFilling(tableFile, table);
             // Modify Sys Table
-            String pathToTable = Paths.get(directory + tableName).toAbsolutePath().toString();
-            sysTable.addRecord(tableName, pathToTable);
+            sysTable.addRecord(tableName, pathToTable.toString());
             sysTable.storeXMLDocument();
         } else {
             System.out.println("Table name duplication!");
@@ -48,13 +48,13 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public void insert(Table table, List<Column> columns, Condition assignments) {
+    public void insert(Table table, List<Column> columns, Conditions assignments) {
         // TODO: find table name through XML sys.table
         throw new NotImplementedException();
     }
 
     @Override
-    public List<Page> getPages(Table table, Condition condition) {
+    public List<Page> getPages(Table table, Conditions conditions) {
         // TODO: pages which
         throw new NotImplementedException();
     }
@@ -62,8 +62,7 @@ public class HeapBufferManager extends AbstractBufferManager {
     /*
         Creates new File for table "fileName" in ../data/
      */
-    private File createTableFile(String directory, String tableName) {
-        Path filePath = Paths.get(directory + tableName);
+    private File createTableFile(String directory, Path filePath) {
         File tableFile = new File(filePath.toAbsolutePath().toString());
 
         // Preventing table re-creation

@@ -3,6 +3,7 @@ package common.conditions;
 
 import common.Column;
 import common.NullObject;
+import common.table_classes.Record;
 import common.table_classes.Table;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
@@ -38,6 +39,16 @@ public class Conditions {
                        ((Condition) a).getTable() == table;
             }
         });
+    }
+
+    public boolean check(Record record)
+    {
+        for (Condition condition : values)
+        {
+            if (!condition.check(record))
+                return false;
+        }
+        return true;
     }
 
 }

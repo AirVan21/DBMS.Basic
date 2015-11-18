@@ -26,4 +26,5 @@ public enum ComparisonType {
         }
         throw new IllegalArgumentException(String.format("Not found comparison '%s'", comparison));
     }
+
 }

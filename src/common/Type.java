@@ -82,4 +82,10 @@ public class Type {
         return null;
     }
 
+    @Override
+    public boolean equals(Object type)
+    {
+        return baseType == ((Type)type).baseType;
+    }
+
 }

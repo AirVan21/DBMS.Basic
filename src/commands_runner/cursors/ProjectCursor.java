@@ -10,16 +10,29 @@ import common.table_classes.Table;
 public class ProjectCursor implements ICursor {
 
     Table table;
-
+    ICursor cursor;
     Conditions filterConditions;
+    Record record = null;
+
+    ProjectCursor(ICursor cursor, Conditions filterConditions, Table table)
+    {
+        this.filterConditions = filterConditions;
+        this.cursor = cursor;
+        this.table = table;
+    }
 
     @Override
     public boolean next() {
-        return false;
+        do {
+            if (!cursor.next())
+                return false;
+            record = cursor.getRecord();
+        } while (!filterConditions.check(record));
+        return true;
     }
 
     @Override
     public Record getRecord() {
-        return null;
+        return cursor.getRecord();
     }
 }

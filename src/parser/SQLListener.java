@@ -74,16 +74,24 @@ public class SQLListener extends SQLiteBaseListener {
 
             Conditions conditions = new Conditions();
             for (SQLiteParser.ExprContext expression : ctx.expr()) {
-                String columnName = expression.expr(0).column_name().getText();
+                String columnName = "";
+                Integer depth = 0;
+                if (expression.expr(0).column_name() != null)
+                    columnName = expression.expr(0).column_name().getText();
+                else {
+                    columnName = expression.expr(0).expr(0).column_name().getText();
+                    depth = 1;
+                }
                 Column column = table.getColumn(columnName);
                 if (column == null)
                     throw new QueryException(String.format("No column '%s' find in table '%s'", table.getName(), columnName));
+
 
                 String comparison = expression.children.get(1).getText();
                 ComparisonType comparisonType = ComparisonType.fromString(comparison);
 
 
-                String valueText = expression.expr(1).literal_value().getText();
+                String valueText = expression.expr(1).getText();
                 Object value = column.getType().castFromString(valueText);
                 if (value == null)
                     throw new QueryException(String.format("Invalid value '%s' at column '%s', use type %s",
@@ -108,8 +116,7 @@ public class SQLListener extends SQLiteBaseListener {
                 columns.add(new ColumnSelect(columnTable, column));
             }
             params.put("columns", ctx.result_column());
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             statementType = StatementType.NONE;
             error_message = e.getMessage();
         }
@@ -141,6 +148,41 @@ public class SQLListener extends SQLiteBaseListener {
 
     @Override
     public void exitInsert_stmt(SQLiteParser.Insert_stmtContext ctx) {
+        statementType = StatementType.INSERT;
+        try {
+            Table table = tableManager.getTable(ctx.table_name().getText());
+            params.put("table_name", table.getName());
+
+            List<Column> columns = new ArrayList<>();
+            List<SQLiteParser.Column_nameContext> tempList = ctx.column_name();
+            for (SQLiteParser.Column_nameContext column_nameContext : tempList) {
+                String columnName = column_nameContext.any_name().getText();
+                Column column = table.getColumn(columnName);
+                columns.add(column);
+            }
+            params.put("columns", columns);
+
+            Conditions conditions = new Conditions();
+            for (int i = 0; i < columns.size(); i++) {
+                SQLiteParser.ExprContext expression = ctx.expr(i);
+                Column column = columns.get(i);
+                ComparisonType comparisonType = ComparisonType.EQUAL;
+
+                String valueText = expression.getText();
+                Object value = column.getType().castFromString(valueText);
+                if (value == null)
+                    throw new QueryException(String.format("Invalid value '%s' at column '%s', use type %s",
+                            valueText, column.getName(), column.getType().getName()));
+
+                conditions.addValue(new Condition(table, column, comparisonType, value));
+            }
+            params.put("conditions", conditions);
+
+
+        } catch (Exception e) {
+            statementType = StatementType.NONE;
+            error_message = e.getMessage();
+        }
     }
 
 }

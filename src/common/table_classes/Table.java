@@ -42,6 +42,10 @@ public class Table {
         });
     }
 
+    public int getColumnIndex(Column column) {
+        return columns.indexOf(column);
+    }
+
     public int getRecordSize() {
         return recordSize;
     }

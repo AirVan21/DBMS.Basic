@@ -59,7 +59,7 @@ public class Page {
     public List<Record> getRecords(Conditions conditions) {
         List<Record> result = new ArrayList<>();
         for (Record record : records) {
-            if (record.check(conditions)) {
+            if (conditions.check(record)) {
                 result.add(record);
             }
         }

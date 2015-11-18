@@ -22,12 +22,13 @@ public class console {
         System.out.println("Hello DBMS!");
 
         testXML(tableManager);
-        testParser(tableManager, sqlParser);
+        //String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
+        String query = "Select person.age, person.name from db.person where person.name = \"petr\"";
+        //String query = "Insert into db.person (name, age) values (\"Petr\", 22)";
+        testParser(tableManager, sqlParser, query);
     }
 
-    private static void testParser(TableManager tableManager, SQLParser sqlParser) {
-        //String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
-        String query = "Select person.age, person.name from db.person where person.age > 5";
+    private static void testParser(TableManager tableManager, SQLParser sqlParser, String query) {
         try {
             Statement statement = sqlParser.parse(query);
             switch (statement.getType()) {
@@ -41,6 +42,9 @@ public class console {
                             (Conditions) statement.getParam("conditions"));
                     break;
                 case INSERT:
+                    tableManager.insert(statement.getStringParam("table_name"),
+                            (List<Column>) statement.getParam("columns"),
+                            null);
                     break;
             }
         } catch (QueryException e) {

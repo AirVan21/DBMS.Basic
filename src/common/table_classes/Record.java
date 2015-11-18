@@ -12,12 +12,16 @@ public class Record {
     Integer rid;
     List<Object> values;
 
-    Boolean check(Conditions conditions) throws IllegalArgumentException {
+    /*Boolean check(Conditions conditions) throws IllegalArgumentException {
         Iterator<Condition> conditionIterator = conditions.getValues().iterator();
         for (int i = 0; conditionIterator.hasNext(); i++) {
             if (!values.get(i).equals(conditionIterator.next().getValue()))
                 return false;
         }
         return true;
+    }*/
+
+    public Object getColumnValue(int columnIndex) {
+        return values.get(columnIndex);
     }
 }

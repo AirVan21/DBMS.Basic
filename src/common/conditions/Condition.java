@@ -1,6 +1,7 @@
 package common.conditions;
 
 import common.Column;
+import common.table_classes.Record;
 import common.table_classes.Table;
 
 /**
@@ -30,4 +31,25 @@ public class Condition {
     public Object getValue() {
         return value;
     }
+
+    public boolean check(Record record)
+    {
+        int columnIndex = table.getColumnIndex(column);
+        Comparable<Object> recValue = (Comparable<Object>)record.getColumnValue(columnIndex);
+
+        switch (comparisonType) {
+            case LESS:
+                return recValue.compareTo(value) < 0;
+            case LESSEQ:
+                return recValue.compareTo(value) <= 0;
+            case EQUAL:
+                return recValue.compareTo(value) == 0;
+            case GREATEQ:
+                return recValue.compareTo(value) >= 0;
+            case GREAT:
+                return recValue.compareTo(value) > 0;
+        }
+        return false;
+    }
+
 }

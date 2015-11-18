@@ -23,7 +23,7 @@ public class SimpleCursor implements ICursor {
         this.table = table;
         this.pages = pages;
         pageNum = 0;
-        recordNum = 0;
+        recordNum = -1;
         recordsCount = Page.PAGE_SIZE / table.getRecordSize();
         currentRecord = pages.get(pageNum).getRecord(recordNum);
     }

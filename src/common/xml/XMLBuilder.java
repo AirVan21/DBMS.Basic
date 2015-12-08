@@ -61,6 +61,22 @@ public class XMLBuilder {
     }
 
     /*
+        Gets table path by it's name from systable
+     */
+    public String getTablePath(String inTableName){
+        String resultPath = "";
+        NodeList nameList = sysTable.getElementsByTagName("name");
+        NodeList pathList = sysTable.getElementsByTagName("path");
+        for (int i = 0; i < nameList.getLength(); i++) {
+            String tableName = nameList.item(i).getTextContent();
+            if (tableName.equals(inTableName)) {
+                return pathList.item(i).getTextContent();
+            }
+        }
+        return resultPath;
+    }
+
+    /*
         Adds description about new table in Sys.Database XML
     */
     public void addRecord(String inTableName, String inTablePath)

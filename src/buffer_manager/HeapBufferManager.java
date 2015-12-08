@@ -9,6 +9,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import common.xml.XMLBuilder;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -19,15 +20,15 @@ import java.util.List;
  */
 public class HeapBufferManager extends AbstractBufferManager {
 
-    List<Page> fullPages;
-    List<Page> incompletePages;
-    XMLBuilder sysTable;
+    private XMLBuilder sysTable;
+    private LoadEngine loadEngine;
 
     public HeapBufferManager(Integer maxPagesCount) {
         super(maxPagesCount);
         // Absolute path for root data base
         Path filePath = Paths.get("data//root_db.ndb");
         sysTable = new XMLBuilder(filePath.toAbsolutePath().toString());
+        loadEngine = new LoadEngine(maxPagesCount);
     }
 
     @Override
@@ -36,15 +37,18 @@ public class HeapBufferManager extends AbstractBufferManager {
         Path pathToTable = Paths.get(directory + table.getFileName());
         if (!sysTable.isExist(tableName)) {
             // Creating new table
-            File tableFile = createTableFile(directory, pathToTable);
-            defaultTableFilling(tableFile, table);
+            loadEngine.switchToTable(pathToTable.toAbsolutePath().toString());
+            loadEngine.writeMetaPage(table);
             // Modify Sys Table
             sysTable.addRecord(tableName, pathToTable.toString());
             sysTable.storeXMLDocument();
+
         } else {
             System.out.println("Table name duplication!");
             // Own exception should be thrown
         }
+
+        System.out.println(table.getName());
     }
 
     @Override
@@ -55,43 +59,14 @@ public class HeapBufferManager extends AbstractBufferManager {
 
     @Override
     public List<Page> getPages(Table table, Conditions conditions) {
-        // TODO: pages which
-        throw new NotImplementedException();
-    }
-
-    /*
-        Creates new File for table "fileName" in ../data/
-     */
-    private File createTableFile(String directory, Path filePath) {
-        File tableFile = new File(filePath.toAbsolutePath().toString());
-
-        // Preventing table re-creation
-        try {
-            tableFile.createNewFile();
-        } catch (IOException alreadyExistException) {
-            System.out.println("Table with name = " + filePath.normalize().toString() + " already exist!");
-            alreadyExistException.printStackTrace();
+        // Optimize this
+        if (sysTable.isExist(table.getName())) {
+            String tablePath = sysTable.getTablePath(table.getName());
+            loadEngine.switchToTable(tablePath);
+            loadEngine.readMetaPage(table);
+        } else {
+            System.out.println("Not such data base file!");
         }
-
-        return tableFile;
-    }
-
-    /*
-        Creates serializable page with meta-info and writs int to tableFile
-     */
-    private void defaultTableFilling(File tableFile, Table table) {
-        try {
-            FileOutputStream fileOutput = new FileOutputStream(tableFile);
-            ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
-            // Using Serializable MataPage representation
-            MetaPage defaultPage = new MetaPage(table.getColumns());
-            objectOutput.writeObject(defaultPage);
-            objectOutput.flush();
-            objectOutput.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return null;
     }
 }

@@ -18,7 +18,7 @@ public class Table {
     String fileName;
     List<Column> columns;
     static final int MAX_COLUMN_COUNT = 10;
-    static final int HEADER_SIZE = Type.MAX_STRING_BYTE_SIZE + MAX_COLUMN_COUNT * Column.DECLARATION_BYTE_SIZE;
+    static final int HEADER_SIZE = MAX_COLUMN_COUNT * Column.DECLARATION_BYTE_SIZE;
     int recordSize;
 
     TableStatistics tableStatistics = new TableStatistics();

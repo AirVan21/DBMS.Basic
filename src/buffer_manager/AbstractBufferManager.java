@@ -1,5 +1,6 @@
 package buffer_manager;
 
+import java.io.RandomAccessFile;
 import java.util.List;
 
 /**
@@ -7,7 +8,7 @@ import java.util.List;
  */
 public abstract class AbstractBufferManager implements IBufferManager {
     // Up to 256 Pages
-    final Integer maxPagesCount;
+    int maxPagesCount = 256;
     // Buffer managers with different structure
     List<IBufferManager> bufferManagerList;
 

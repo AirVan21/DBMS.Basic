@@ -24,8 +24,9 @@ public class console {
 
         testXML(tableManager);
         //String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
-        String query = "Select person.age, person.name from db.person where person.name = \"petr\"";
-        //String query = "Insert into db.person (name, age) values (\"Petr\", 22)";
+        String query = "Insert into db.person (name, age) values (\"Petr\", 22)";
+        testParser(tableManager, sqlParser, query);
+        query = "Select person.age, person.name from db.person where person.name = \"Petr\"";
         testParser(tableManager, sqlParser, query);
     }
 

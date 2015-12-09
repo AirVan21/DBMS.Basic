@@ -4,7 +4,6 @@ import common.utils.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Created by semionn on 09.10.15.
@@ -12,7 +11,6 @@ import java.util.Objects;
 public class Type {
 
     BaseType baseType;
-    Map<String, Object> params;
     public static final int DECLARATION_BYTE_SIZE = 8; // 4 byte for type, 4 byte for params
 
     public static final int MAX_STRING_SIZE = 100;
@@ -20,12 +18,15 @@ public class Type {
 
     int size;
 
-    Type(BaseType baseType, Map<String, Object> params){
+    public BaseType getBaseType() {
+        return baseType;
+    }
+
+    public Type(BaseType baseType) {
         this.baseType = baseType;
-        this.params = params;
         switch (baseType) {
             case VARCHAR:
-                size = 4 + (int)params.get("length") * Utils.getCharByteSize();
+                size = 4 + MAX_STRING_SIZE * Utils.getCharByteSize();
                 break;
             case DOUBLE:
                 size = Utils.getDoubleByteSize();
@@ -34,11 +35,6 @@ public class Type {
                 size = Utils.getIntByteSize();
                 break;
         }
-    }
-
-    public Type(BaseType baseType)
-    {
-        this(baseType, null);
     }
 
     public int getSize() {
@@ -50,7 +46,7 @@ public class Type {
     public static Type createType(String typeName) {
         for (BaseType baseType : BaseType.values()) {
             if (typeName.toUpperCase() == baseType.name) {
-                return new Type(baseType, null);
+                return new Type(baseType);
             }
         }
         throw new IllegalArgumentException(String.format("Invalid type %s", typeName));
@@ -61,7 +57,7 @@ public class Type {
             if (typeName.toUpperCase().equals(baseType.name)) {
                 Map<String, Object> params = new HashMap<>();
                 params.put("length", length);
-                return new Type(baseType, params);
+                return new Type(baseType);
             }
         }
         throw new IllegalArgumentException(String.format("Invalid type %s", typeName));
@@ -70,9 +66,8 @@ public class Type {
     public Object castFromString(String value) {
         switch (baseType) {
             case VARCHAR:
-                int maxlength = (int)params.get("length");
-                if (value.length() > maxlength)
-                    return value.substring(0, maxlength - 1);
+                if (value.length() > MAX_STRING_SIZE)
+                    return value.substring(0, MAX_STRING_SIZE - 1);
                 return value;
             case DOUBLE:
                 return Double.parseDouble(value);

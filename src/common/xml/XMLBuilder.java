@@ -11,6 +11,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import buffer_manager.AbstractBufferManager;
+import org.antlr.v4.runtime.misc.Pair;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -20,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by airvan21 on 25.10.15.
@@ -119,6 +123,21 @@ public class XMLBuilder {
         } catch (TransformerException e) {
             e.printStackTrace();
         }
+    }
+
+    /*
+         Table content reader
+    */
+    public List<Pair<String, String>> loadContents() {
+        List<Pair<String, String>> content = new ArrayList<>();
+        NodeList nameList = sysTable.getElementsByTagName("name");
+        NodeList pathList = sysTable.getElementsByTagName("path");
+        String rootdbPath = AbstractBufferManager.DATA_ROOT_DB_FILE.toAbsolutePath().toString();
+        for (int i = 0; i < nameList.getLength(); i++) {
+            if (!pathList.item(i).getTextContent().equals(rootdbPath))
+                content.add(new Pair<>(nameList.item(i).getTextContent(), pathList.item(i).getTextContent()));
+        }
+        return content;
     }
 
     /*

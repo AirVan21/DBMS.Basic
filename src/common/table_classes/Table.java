@@ -24,14 +24,19 @@ public class Table {
     TableStatistics tableStatistics = new TableStatistics();
     AbstractIndex index = null;
 
+    public void setColumns(List<Column> columns) {
+        this.columns = columns;
+    }
+
     public Table(String name, String fileName, List<Column> columns){
         this.name = name;
         this.columns = columns;
         this.fileName = fileName;
         recordSize = 0;
-        for (Column column : columns) {
-            recordSize += column.getType().getSize();
-        }
+        if (columns != null)
+            for (Column column : columns) {
+                recordSize += column.getType().getSize();
+            }
     }
 
     public Column getColumn(final String columnName) {
@@ -46,8 +51,13 @@ public class Table {
         return columns.indexOf(column);
     }
 
+    public void setRecordSize(int recordSize) {
+        this.recordSize = recordSize;
+    }
+
     public int getRecordSize() {
         return recordSize;
+
     }
 
     public List<Column> getColumns() {

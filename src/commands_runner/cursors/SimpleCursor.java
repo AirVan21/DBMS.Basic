@@ -1,10 +1,9 @@
 package commands_runner.cursors;
 
+import buffer_manager.LoadEngine;
 import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
-
-import java.util.List;
 
 /**
  * Created by semionn on 28.10.15.
@@ -12,32 +11,37 @@ import java.util.List;
 public class SimpleCursor implements ICursor {
 
     Table table;
-    List<Page> pages;
+    LoadEngine loadEngine;
     int pageNum;
     int recordNum;
     Record currentRecord;
+    Page currentPage;
 
-    int recordsCount;
+    int maxRecordsCount;
 
-    public SimpleCursor(List<Page> pages, Table table){
+    public SimpleCursor(LoadEngine loadEngine, Table table){
         this.table = table;
-        this.pages = pages;
+        this.loadEngine = loadEngine;
         pageNum = 0;
         recordNum = -1;
-        recordsCount = Page.PAGE_SIZE / table.getRecordSize();
-        currentRecord = pages.get(pageNum).getRecord(recordNum);
+        maxRecordsCount = Page.PAGE_SIZE / table.getRecordSize();
+        loadEngine.switchToTable(table.getFileName());
+        currentPage = loadEngine.getPageFromBuffer(pageNum);
+        currentRecord = currentPage.getRecord(recordNum);
     }
 
     @Override
     public boolean next() {
         recordNum += 1;
-        if (recordNum >= recordsCount) {
+        if (recordNum >= maxRecordsCount) {
             recordNum = 0;
-            pageNum += 1;
-            if (pageNum >= pages.size())
+            if (loadEngine.sizeInPages() <= pageNum && recordNum >= currentPage.getRecordsCount())
                 return false;
+            pageNum += 1;
+            loadEngine.switchToTable(table.getFileName());
+            currentPage = loadEngine.getPageFromBuffer(pageNum);
         }
-        currentRecord = pages.get(pageNum).getRecord(recordNum);
+        currentRecord = currentPage.getRecord(recordNum);
         return true;
     }
 

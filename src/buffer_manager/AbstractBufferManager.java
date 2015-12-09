@@ -1,5 +1,8 @@
 package buffer_manager;
 
+import java.io.RandomAccessFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -7,7 +10,8 @@ import java.util.List;
  */
 public abstract class AbstractBufferManager implements IBufferManager {
     // Up to 256 Pages
-    final Integer maxPagesCount;
+    int maxPagesCount = 256;
+    public static final Path DATA_ROOT_DB_FILE = Paths.get("data//root_db.ndb");
     // Buffer managers with different structure
     List<IBufferManager> bufferManagerList;
 

@@ -18,6 +18,7 @@ public class console {
         String dbFolder = "data//";
         Integer bufferPoolSize = 512;
         TableManager tableManager = new TableManager(bufferPoolSize, dbFolder);
+        tableManager.loadTables();
         SQLParser sqlParser = new SQLParser(tableManager);
         System.out.println("Hello DBMS!");
 

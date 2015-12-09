@@ -20,18 +20,15 @@ public class Page {
 
     static final int HEADER_SIZE = 8 + 3; //TODO: more accurate and explicit
 
-    Table table;
     ArrayList<Record> records;
-    int loadedRecordsCount;
+    int recordsCount;
 
-    Page(Table table) {
-        this.table = table;
-        loadedRecordsCount = 0;
+    final int maxRecordCount;
+
+    Page(int recordSize) {
+        recordsCount = 0;
+        maxRecordCount = (PAGE_SIZE - HEADER_SIZE) / recordSize;
         records = new ArrayList<>();
-    }
-
-    public Table getTable() {
-        return table;
     }
 
     void readHeader() {
@@ -43,8 +40,8 @@ public class Page {
     }
 
     public Record getRecord(int num) {
-        if (num >= loadedRecordsCount)
-            for (int i = loadedRecordsCount - 1; i < num; i++) {
+        if (num >= recordsCount)
+            for (int i = recordsCount - 1; i < num; i++) {
                 readRecord(i);
             }
         return records.get(num);
@@ -64,6 +61,21 @@ public class Page {
             }
         }
         return result;
+    }
+
+    public boolean isFull() {
+        return full;
+    }
+
+    public void addRecord(Record record) {
+        records.add(record);
+        recordsCount += 1;
+        if (recordsCount >= maxRecordCount)
+            full = true;
+    }
+
+    public int getRecordsCount() {
+        return recordsCount;
     }
 
 }

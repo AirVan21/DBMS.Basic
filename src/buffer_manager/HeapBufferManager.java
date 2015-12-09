@@ -1,17 +1,19 @@
 package buffer_manager;
 
+import commands_runner.cursors.ICursor;
+import commands_runner.cursors.SimpleCursor;
 import common.Column;
 import common.conditions.Conditions;
-import common.table_classes.MetaPage;
-import common.table_classes.Page;
 import common.table_classes.Table;
+import org.antlr.v4.runtime.misc.Pair;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import common.xml.XMLBuilder;
 
-import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -19,15 +21,14 @@ import java.util.List;
  */
 public class HeapBufferManager extends AbstractBufferManager {
 
-    List<Page> fullPages;
-    List<Page> incompletePages;
-    XMLBuilder sysTable;
+    private XMLBuilder sysTable;
+    private LoadEngine loadEngine;
 
     public HeapBufferManager(Integer maxPagesCount) {
         super(maxPagesCount);
         // Absolute path for root data base
-        Path filePath = Paths.get("data//root_db.ndb");
-        sysTable = new XMLBuilder(filePath.toAbsolutePath().toString());
+        sysTable = new XMLBuilder(DATA_ROOT_DB_FILE.toAbsolutePath().toString());
+        loadEngine = new LoadEngine(maxPagesCount);
     }
 
     @Override
@@ -36,15 +37,31 @@ public class HeapBufferManager extends AbstractBufferManager {
         Path pathToTable = Paths.get(directory + table.getFileName());
         if (!sysTable.isExist(tableName)) {
             // Creating new table
-            File tableFile = createTableFile(directory, pathToTable);
-            defaultTableFilling(tableFile, table);
+            loadEngine.switchToTable(pathToTable.toAbsolutePath().toString());
+            loadEngine.writeMetaPage(table);
             // Modify Sys Table
             sysTable.addRecord(tableName, pathToTable.toString());
             sysTable.storeXMLDocument();
+
         } else {
             System.out.println("Table name duplication!");
             // Own exception should be thrown
         }
+
+        System.out.println(table.getName());
+    }
+
+    @Override
+    public Map<String, Table> loadTables() {
+        Map<String, Table> result = new HashMap<>();
+        List<Pair<String, String>> content = sysTable.loadContents();
+        for (Pair<String, String> item : content) {
+            Table table = new Table(item.a, item.b, null);
+            loadEngine.switchToTable(item.b);
+            loadEngine.readMetaPage(table);
+            result.put(item.a, table);
+        }
+        return result;
     }
 
     @Override
@@ -54,44 +71,15 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public List<Page> getPages(Table table, Conditions conditions) {
-        // TODO: pages which
-        throw new NotImplementedException();
-    }
-
-    /*
-        Creates new File for table "fileName" in ../data/
-     */
-    private File createTableFile(String directory, Path filePath) {
-        File tableFile = new File(filePath.toAbsolutePath().toString());
-
-        // Preventing table re-creation
-        try {
-            tableFile.createNewFile();
-        } catch (IOException alreadyExistException) {
-            System.out.println("Table with name = " + filePath.normalize().toString() + " already exist!");
-            alreadyExistException.printStackTrace();
+    public ICursor getCursor(Table table, Conditions conditions) {
+        // Optimize this
+        if (sysTable.isExist(table.getName())) {
+            String tablePath = sysTable.getTablePath(table.getName());
+            loadEngine.switchToTable(tablePath);
+            return new SimpleCursor(loadEngine, table);
+        } else {
+            System.out.println("Not such data base file!");
         }
-
-        return tableFile;
-    }
-
-    /*
-        Creates serializable page with meta-info and writs int to tableFile
-     */
-    private void defaultTableFilling(File tableFile, Table table) {
-        try {
-            FileOutputStream fileOutput = new FileOutputStream(tableFile);
-            ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
-            // Using Serializable MataPage representation
-            MetaPage defaultPage = new MetaPage(table.getColumns());
-            objectOutput.writeObject(defaultPage);
-            objectOutput.flush();
-            objectOutput.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return null;
     }
 }

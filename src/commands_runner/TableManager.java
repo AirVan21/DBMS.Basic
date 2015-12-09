@@ -57,9 +57,13 @@ public class TableManager implements ITableManager {
 
         Table table = tablesMap.get(tableName);
         // Uses conditions for complicated selects all over several tables
-        List<Page> pages = bufferManager.getPages(table, conditions);
-        ICursor cursor = createCursor(pages, conditions);
+        ICursor cursor = bufferManager.getCursor(table, conditions);
         return cursor;
+    }
+
+    @Override
+    public void loadTables() {
+        tablesMap = bufferManager.loadTables();
     }
 
     @Override
@@ -69,23 +73,23 @@ public class TableManager implements ITableManager {
         return tablesMap.get(tableName);
     }
 
-    ICursor createCursor(List<Page> pages, Conditions conditions)
-    {
-        Map<String, Table> tables = new HashMap<>();
-        for (Page page : pages)
-        {
-            Table table = page.getTable();
-            if (!tables.containsKey(table.getName())){
-                tables.put(table.getName(), table);
-            }
-        }
-
-        ICursor cursor = null;
-
-        if (tables.size() == 1)
-            cursor = new SimpleCursor(pages, pages.get(0).getTable());
-
-        return cursor;
-    }
+//    ICursor createCursor(List<Page> pages, Conditions conditions)
+//    {
+//        Map<String, Table> tables = new HashMap<>();
+//        for (Page page : pages)
+//        {
+//            Table table = page.getTable();
+//            if (!tables.containsKey(table.getName())){
+//                tables.put(table.getName(), table);
+//            }
+//        }
+//
+//        ICursor cursor = null;
+//
+//        if (tables.size() == 1)
+//            cursor = new SimpleCursor(pages, pages.get(0).getTable());
+//
+//        return cursor;
+//    }
 
 }

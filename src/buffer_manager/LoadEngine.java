@@ -12,7 +12,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +26,7 @@ public class LoadEngine {
     private int[] usedPages;
     private List<Page> pageBuffer;
     private RandomAccessFile tableFile;
+    private Table table;
 
     // pageIndex -> buffer position
     private Map<Integer, Integer> pageIndBufferPos;
@@ -43,9 +44,10 @@ public class LoadEngine {
     /*
         Creates new File for table "fileName" in ../data/
     */
-    public void switchToTable(String filePath) {
+    public void switchToTable(Table table) {
         try {
-            tableFile = new RandomAccessFile(filePath, "rw");
+            this.table = table;
+            tableFile = new RandomAccessFile(table.getFileName(), "rw");
         } catch (FileNotFoundException e) {
             System.out.println("Problems in RandomAccessFile creation");
             e.printStackTrace();
@@ -142,23 +144,24 @@ public class LoadEngine {
     {
         int index = loadPageInBuffer(firstIncompletePageIndex);
         Page pageToAdd = pageBuffer.get(index);
-        if (!pageToAdd.isFull())
-            pageToAdd.addRecord(record);
-        else
-        {
-            throw new NotImplementedException();
-            /*
-                TODO: store count of incomplete pages,
-                add new page, if there is no free pages
-                ,i.e. call nextBufferPos()
-            */
+        if (pageToAdd.isFull()) {
+            pageToAdd = new Page(table.getRecordSize());
+            int replacePos = nextBufferPos();
+            try {
+                tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
+                storePageInFile(index);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            pageBuffer.remove(replacePos);
+            pageBuffer.add(replacePos, pageToAdd);
         }
+        pageToAdd.addRecord(record);
     }
 
     /*
         Find in hashmap index of page or load page if it's not in buffer
      */
-
     public Page getPageFromBuffer(int pagIndex){
         throw new NotImplementedException();
     }
@@ -166,8 +169,28 @@ public class LoadEngine {
     public void storePageInFile(int pageIndex)
     {
         try {
-            int bufferPos = nextBufferPos();
             tableFile.seek(pageIndex * Page.PAGE_SIZE);
+            Page pageToWrite = pageBuffer.get(pageIndex);
+            tableFile.writeBoolean(pageToWrite.deleted);
+            tableFile.writeBoolean(pageToWrite.dirty);
+            tableFile.writeBoolean(pageToWrite.full);
+            List<Column> columns = table.getColumns();
+            for (Record record : pageToWrite.getAllRecords())
+            {
+                for (int i = 0; i < table.getColumns().size(); i++) {
+                    Object value = record.getColumnValue(i);
+                    switch (columns.get(i).getType().getBaseType()) {
+                        case VARCHAR:
+                            tableFile.writeChars((String)value);
+                            break;
+                        case DOUBLE:
+                            tableFile.writeDouble((double)value);
+                        case INT:
+                            tableFile.writeInt((int)value);
+                            break;
+                    }
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class Record {
     Integer rid;
-    List<Object> values;
+    public List<Object> values;
 
     /*Boolean check(Conditions conditions) throws IllegalArgumentException {
         Iterator<Condition> conditionIterator = conditions.getValues().iterator();

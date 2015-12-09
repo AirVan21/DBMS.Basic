@@ -35,9 +35,10 @@ public class HeapBufferManager extends AbstractBufferManager {
     public void createTable(String directory, Table table) {
         String tableName = table.getName();
         Path pathToTable = Paths.get(directory + table.getFileName());
+        table.setFileName(pathToTable.toAbsolutePath().toString());
         if (!sysTable.isExist(tableName)) {
             // Creating new table
-            loadEngine.switchToTable(pathToTable.toAbsolutePath().toString());
+            loadEngine.switchToTable(table);
             loadEngine.writeMetaPage(table);
             // Modify Sys Table
             sysTable.addRecord(tableName, pathToTable.toString());
@@ -57,7 +58,7 @@ public class HeapBufferManager extends AbstractBufferManager {
         List<Pair<String, String>> content = sysTable.loadContents();
         for (Pair<String, String> item : content) {
             Table table = new Table(item.a, item.b, null);
-            loadEngine.switchToTable(item.b);
+            loadEngine.switchToTable(table);
             loadEngine.readMetaPage(table);
             result.put(item.a, table);
         }
@@ -66,6 +67,16 @@ public class HeapBufferManager extends AbstractBufferManager {
 
     @Override
     public void insert(Table table, List<Column> columns, Conditions assignments) {
+        if (!sysTable.isExist(table.getName())) {
+            // Creating new table
+            loadEngine.switchToTable(table);
+            //loadEngine.storeRecordInPage();
+
+        } else {
+            System.out.println("We want to insert pag in Table which do not exist");
+            // Own exception should be thrown
+        }
+
         // TODO: find table name through XML sys.table
         throw new NotImplementedException();
     }
@@ -75,7 +86,7 @@ public class HeapBufferManager extends AbstractBufferManager {
         // Optimize this
         if (sysTable.isExist(table.getName())) {
             String tablePath = sysTable.getTablePath(table.getName());
-            loadEngine.switchToTable(tablePath);
+            loadEngine.switchToTable(table);
             return new SimpleCursor(loadEngine, table);
         } else {
             System.out.println("Not such data base file!");

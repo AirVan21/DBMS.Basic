@@ -10,10 +10,10 @@ import java.util.List;
  */
 public class Page {
     int pageId; //?
-    int pinCount;
-    boolean deleted;
-    boolean dirty;
-    boolean full;
+    public int pinCount;
+    public boolean deleted;
+    public boolean dirty;
+    public boolean full;
 
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
@@ -25,7 +25,7 @@ public class Page {
 
     final int maxRecordCount;
 
-    Page(int recordSize) {
+    public Page(int recordSize) {
         recordsCount = 0;
         maxRecordCount = (PAGE_SIZE - HEADER_SIZE) / recordSize;
         records = new ArrayList<>();
@@ -61,6 +61,10 @@ public class Page {
             }
         }
         return result;
+    }
+
+    public List<Record> getAllRecords() {
+        return records;
     }
 
     public boolean isFull() {

@@ -2,8 +2,8 @@ package buffer_manager;
 
 import commands_runner.cursors.ICursor;
 import commands_runner.cursors.SimpleCursor;
-import common.Column;
 import common.conditions.Conditions;
+import common.table_classes.Record;
 import common.table_classes.Table;
 import org.antlr.v4.runtime.misc.Pair;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -66,16 +66,16 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public void insert(Table table, List<Column> columns, Conditions assignments) {
+    public void insert(Table table, Record record) {
         if (!sysTable.isExist(table.getName())) {
             // Creating new table
-            loadEngine.switchToTable(table);
-            //loadEngine.storeRecordInPage();
-
         } else {
-            System.out.println("We want to insert pag in Table which do not exist");
+            // WAT?
+            // System.out.println("We want to insert pag in Table which do not exist");
             // Own exception should be thrown
         }
+        loadEngine.switchToTable(table);
+        loadEngine.storeRecordInPage(record);
 
         // TODO: find table name through XML sys.table
         throw new NotImplementedException();

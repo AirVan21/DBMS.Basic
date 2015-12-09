@@ -1,5 +1,6 @@
 package common.table_classes;
 
+import common.Column;
 import common.conditions.Condition;
 import common.conditions.Conditions;
 
@@ -20,6 +21,13 @@ public class Record {
         }
         return true;
     }*/
+
+    public Record(List<Column> columns, Conditions assignment) {
+        values = new ArrayList<>();
+        for (Column column : columns) {
+            values.add(assignment.getColumnValue(column.getName()));
+        }
+    }
 
     public Object getColumnValue(int columnIndex) {
         return values.get(columnIndex);

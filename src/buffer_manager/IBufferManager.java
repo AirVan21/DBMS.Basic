@@ -4,6 +4,7 @@ import commands_runner.cursors.ICursor;
 import common.Column;
 import common.conditions.Conditions;
 import common.table_classes.Page;
+import common.table_classes.Record;
 import common.table_classes.Table;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.Map;
 public interface IBufferManager {
     ICursor getCursor(Table table, Conditions conditions);
 
-    void insert(Table table, List<Column> columns, Conditions assignments);
+    void insert(Table table, Record record);
 
     void createTable(String directory, Table table);
 

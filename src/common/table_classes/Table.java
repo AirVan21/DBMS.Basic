@@ -16,6 +16,7 @@ import java.util.List;
 public class Table {
     String name;
     String fileName;
+
     List<Column> columns;
     static final int MAX_COLUMN_COUNT = 10;
     static final int HEADER_SIZE = MAX_COLUMN_COUNT * Column.DECLARATION_BYTE_SIZE;
@@ -75,4 +76,9 @@ public class Table {
     public AbstractIndex getIndex() {
         return index;
     }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
 }

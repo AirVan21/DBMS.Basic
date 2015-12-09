@@ -46,7 +46,7 @@ public class console {
                 case INSERT:
                     tableManager.insert(statement.getStringParam("table_name"),
                             (List<Column>) statement.getParam("columns"),
-                            null);
+                            (Conditions) statement.getParam("conditions"));
                     break;
             }
         } catch (QueryException e) {

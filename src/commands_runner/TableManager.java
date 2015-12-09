@@ -3,11 +3,10 @@ package commands_runner;
 import buffer_manager.HeapBufferManager;
 import buffer_manager.IBufferManager;
 import commands_runner.cursors.ICursor;
-import commands_runner.cursors.SimpleCursor;
 import common.Column;
 import common.ColumnSelect;
 import common.conditions.Conditions;
-import common.table_classes.Page;
+import common.table_classes.Record;
 import common.table_classes.Table;
 
 import java.util.HashMap;
@@ -47,7 +46,8 @@ public class TableManager implements ITableManager {
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        bufferManager.insert(table, columns, assignments);
+        Record record = new Record(columns, assignments);
+        bufferManager.insert(table, record);
     }
 
     @Override

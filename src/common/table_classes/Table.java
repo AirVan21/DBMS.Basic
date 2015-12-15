@@ -41,11 +41,10 @@ public class Table {
     }
 
     public Column getColumn(final String columnName) {
-        return CollectionUtils.find(columns, new Predicate() {
-            public boolean evaluate(Object a) {
-                return ((Column) a).getName().equals(columnName.toUpperCase());
-            }
-        });
+        for (Column column : columns)
+            if (column.getName().equals(columnName.toUpperCase()))
+                return column;
+        return null;
     }
 
     public int getColumnIndex(Column column) {

@@ -3,6 +3,7 @@ package buffer_manager;
 import commands_runner.cursors.ICursor;
 import commands_runner.cursors.SimpleCursor;
 import common.conditions.Conditions;
+import common.exceptions.QueryException;
 import common.table_classes.Record;
 import common.table_classes.Table;
 import org.antlr.v4.runtime.misc.Pair;
@@ -59,26 +60,24 @@ public class HeapBufferManager extends AbstractBufferManager {
         for (Pair<String, String> item : content) {
             Table table = new Table(item.a, item.b, null);
             loadEngine.switchToTable(table);
-            loadEngine.readMetaPage(table);
             result.put(item.a, table);
         }
         return result;
     }
 
     @Override
-    public void insert(Table table, Record record) {
-        if (!sysTable.isExist(table.getName())) {
-            // Creating new table
-        } else {
-            // WAT?
-            // System.out.println("We want to insert pag in Table which do not exist");
-            // Own exception should be thrown
-        }
-        loadEngine.switchToTable(table);
-        loadEngine.storeRecordInPage(record);
+    public void flushAllData() {
+        loadEngine.flushAllData();
+    }
 
-        // TODO: find table name through XML sys.table
-        throw new NotImplementedException();
+    @Override
+    public void insert(Table table, Record record) throws QueryException {
+        if (sysTable.isExist(table.getName())) {
+            loadEngine.switchToTable(table);
+            loadEngine.storeRecordInPage(record);
+        } else {
+            throw new QueryException("Trying insert in table which do not exist!");
+        }
     }
 
     @Override

@@ -16,6 +16,8 @@ public interface ITableManager {
     ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
     void loadTables();
 
+    void flushAllTables();
+
 
     Table getTable(String tableName);
 }

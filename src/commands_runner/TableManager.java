@@ -6,6 +6,7 @@ import commands_runner.cursors.ICursor;
 import common.Column;
 import common.ColumnSelect;
 import common.conditions.Conditions;
+import common.exceptions.QueryException;
 import common.table_classes.Record;
 import common.table_classes.Table;
 
@@ -29,6 +30,11 @@ public class TableManager implements ITableManager {
     }
 
     @Override
+    public void flushAllTables() {
+        bufferManager.flushAllData();
+    }
+
+    @Override
     public void createTable(String tableName, List<Column> columns) {
         String fileName = generateFileName(tableName);
         Table newTable = new Table(tableName, fileName, columns);
@@ -47,7 +53,11 @@ public class TableManager implements ITableManager {
 
         Table table = tablesMap.get(tableName);
         Record record = new Record(columns, assignments);
-        bufferManager.insert(table, record);
+        try {
+            bufferManager.insert(table, record);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

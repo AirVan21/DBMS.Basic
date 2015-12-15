@@ -2,7 +2,11 @@ package buffer_manager;
 
 import common.BaseType;
 import common.Column;
+import common.NullObject;
 import common.Type;
+import common.conditions.ComparisonType;
+import common.conditions.Condition;
+import common.conditions.Conditions;
 import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
@@ -13,10 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by airvan21 on 03.12.15.
@@ -47,9 +48,15 @@ public class LoadEngine {
     public void switchToTable(Table table) {
         try {
             this.table = table;
+            if (tableFile != null)
+                tableFile.close();
             tableFile = new RandomAccessFile(table.getFileName(), "rw");
+            // Get table context
+            readMetaPage(table);
         } catch (FileNotFoundException e) {
             System.out.println("Problems in RandomAccessFile creation");
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -88,7 +95,7 @@ public class LoadEngine {
             }
             tableFile.writeInt(firstFullPageIndex);
             tableFile.writeInt(firstIncompletePageIndex);
-            tableFile.close();
+            tableFile.getFD().sync();
         } catch (FileNotFoundException e) {
             System.out.print("Couldn't write table file!");
         } catch (IOException e) {
@@ -114,8 +121,7 @@ public class LoadEngine {
             }
             table.setColumns(columns);
             firstFullPageIndex = tableFile.readInt();
-            firstFullPageIndex = tableFile.readInt();
-            tableFile.close();
+            firstIncompletePageIndex = tableFile.readInt();
         } catch (FileNotFoundException e) {
             System.out.print("Couldn't read table file!");
         } catch (IOException e) {
@@ -123,29 +129,33 @@ public class LoadEngine {
         }
     }
 
+    // return buffer position for loaded page
     public int loadPageInBuffer(int pageIndex)
     {
-        try {
-            // Check if already in Buffer
-            // if not:
-            int bufferPos = nextBufferPos();
-            tableFile.seek(pageIndex * Page.PAGE_SIZE);
-            Page pageToFill = pageBuffer.get(bufferPos);
-            // TODO: parse bytes to Page
-            throw new NotImplementedException();
-            // return  bufferPos;
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = 0; i < pageBuffer.size(); ++i)
+        {
+            if (pageBuffer.get(i).pageId == pageIndex && table.getName().equals(pageBuffer.get(i).table.getName()))
+            {
+                return i;
+            }
         }
-        return -1;
+        // Not in buffer
+        int bufferPos = nextBufferPos();
+        Page pageToFill = pageBuffer.get(bufferPos);
+        pageToFill.pageId = pageIndex;
+        loadPageFromFile(pageToFill);
+        pageBuffer.add(bufferPos, pageToFill);
+        return  bufferPos;
     }
 
     public void storeRecordInPage(Record record)
     {
+        if (pageBuffer.size() < firstIncompletePageIndex)
+            storePageInFile(firstIncompletePageIndex);
         int index = loadPageInBuffer(firstIncompletePageIndex);
         Page pageToAdd = pageBuffer.get(index);
         if (pageToAdd.isFull()) {
-            pageToAdd = new Page(table.getRecordSize());
+            pageToAdd = new Page(table);
             int replacePos = nextBufferPos();
             try {
                 tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
@@ -166,19 +176,78 @@ public class LoadEngine {
         throw new NotImplementedException();
     }
 
+    public void loadPageFromFile(Page fillPage)
+    {
+        try {
+            tableFile.seek(fillPage.pageId * Page.PAGE_SIZE);
+            tableFile.readInt();
+            fillPage.deleted = tableFile.readBoolean();
+            fillPage.dirty = tableFile.readBoolean();
+            fillPage.full = tableFile.readBoolean();
+            int recordCount = tableFile.readInt();
+            for (int i = 0; i < recordCount; ++i)
+            {
+                Conditions assignment = new Conditions();
+                for (int j = 0; j < table.getColumns().size(); ++j)
+                {
+                    int typeID = tableFile.readInt();
+                    BaseType type = BaseType.createBaseType(typeID);
+                    Condition condition = null;
+                    switch (type) {
+                        case VARCHAR:
+                            byte[] string = new byte[Type.MAX_STRING_BYTE_SIZE];
+                            tableFile.read(string, 0, Type.MAX_STRING_BYTE_SIZE);
+                            String stringField = new String(string);
+                            condition = new Condition(table, table.getColumns().get(i), ComparisonType.EQUAL, stringField);
+                            break;
+                        case DOUBLE:
+                            double dValue = tableFile.readDouble();
+                            condition = new Condition(table, table.getColumns().get(i), ComparisonType.EQUAL, dValue);
+                            break;
+                        case INT:
+                            int iValue = tableFile.readInt();
+                            condition = new Condition(table, table.getColumns().get(i), ComparisonType.EQUAL, iValue);
+                            break;
+                    }
+                    assignment.addValue(condition);
+                }
+                Record record = new Record(table.getColumns(), assignment);
+                fillPage.addRecord(record);
+            }
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     public void storePageInFile(int pageIndex)
     {
         try {
+            if (tableFile.length() / Page.PAGE_SIZE <= pageIndex + 1) {
+                tableFile.setLength(Page.PAGE_SIZE * (pageIndex + 1));
+            }
             tableFile.seek(pageIndex * Page.PAGE_SIZE);
-            Page pageToWrite = pageBuffer.get(pageIndex);
+            Page pageToWrite;
+            if (pageIndex >= pageBuffer.size())
+            {
+                pageToWrite = new Page(table);
+                pageToWrite.pageId = pageIndex;
+                pageBuffer.add(pageToWrite);
+
+            } else {
+                pageToWrite = pageBuffer.get(pageIndex);
+            }
+            tableFile.writeInt(pageToWrite.pageId);
             tableFile.writeBoolean(pageToWrite.deleted);
             tableFile.writeBoolean(pageToWrite.dirty);
             tableFile.writeBoolean(pageToWrite.full);
+            tableFile.writeInt(pageToWrite.getRecordsCount());
             List<Column> columns = table.getColumns();
             for (Record record : pageToWrite.getAllRecords())
             {
                 for (int i = 0; i < table.getColumns().size(); i++) {
                     Object value = record.getColumnValue(i);
+                    tableFile.writeInt(columns.get(i).getType().getBaseType().getTypeNumber());
                     switch (columns.get(i).getType().getBaseType()) {
                         case VARCHAR:
                             tableFile.writeChars((String)value);
@@ -212,4 +281,34 @@ public class LoadEngine {
         }
         return 0;
     }
+
+    private void searchFirstIncompletePage()
+    {
+        for (int i = 0; i < pageBuffer.size(); ++i) {
+            if (!pageBuffer.get(i).isFull() && pageBuffer.get(i).table == table)
+            {
+                firstIncompletePageIndex = i;
+                return;
+            }
+        }
+    }
+
+    public void flushTableData() {
+        for (int i = 0; i < pageBuffer.size(); i++) {
+            if (pageBuffer.get(i).table == table)
+                storePageInFile(i);
+        }
+    }
+
+    public void flushAllData() {
+        Set<Table> allTables = new HashSet<>();
+        for (Page page : pageBuffer) {
+            allTables.add(page.table);
+        }
+        for (Table table : allTables) {
+            switchToTable(table);
+            flushTableData();
+        }
+    }
+
 }

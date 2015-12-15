@@ -9,11 +9,12 @@ import java.util.List;
  * Created by semionn on 09.10.15.
  */
 public class Page {
-    int pageId; //?
+    public int pageId;
     public int pinCount;
     public boolean deleted;
     public boolean dirty;
     public boolean full;
+    public Table table;
 
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
@@ -25,18 +26,11 @@ public class Page {
 
     final int maxRecordCount;
 
-    public Page(int recordSize) {
+    public Page(Table table) {
         recordsCount = 0;
-        maxRecordCount = (PAGE_SIZE - HEADER_SIZE) / recordSize;
+        this.table = table;
+        maxRecordCount = (PAGE_SIZE - HEADER_SIZE) / table.recordSize;
         records = new ArrayList<>();
-    }
-
-    void readHeader() {
-        //TODO: read header from file and fill params
-        pinCount = 0;
-        deleted = false;
-        dirty = false;
-        full = false;
     }
 
     public Record getRecord(int num) {

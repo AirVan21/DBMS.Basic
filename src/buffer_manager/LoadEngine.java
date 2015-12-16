@@ -54,8 +54,8 @@ public class LoadEngine {
             tableFile = new RandomAccessFile(table.getFileName(), "rw");
             // Get table context
             readMetaPage(table);
-            if (pageBuffer.size() == 0)
-                pageBuffer.add(new Page(table));
+//            if (pageBuffer.size() == 0)
+//                pageBuffer.add(new Page(table));
         } catch (FileNotFoundException e) {
             System.out.println("Problems in RandomAccessFile creation");
             e.printStackTrace();
@@ -69,20 +69,21 @@ public class LoadEngine {
         Creates new File for table "fileName" in ../data/
     */
     public void switchToNewTable(Table table) {
-        try {
-            this.table = table;
-            if (tableFile != null)
-                tableFile.close();
-            tableFile = new RandomAccessFile(table.getFileName(), "rw");
-            // Get table context
-            if (pageBuffer.size() == 0)
-                pageBuffer.add(new Page(table));
-        } catch (FileNotFoundException e) {
-            System.out.println("Problems in RandomAccessFile creation");
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (this.table != table)
+            try {
+                this.table = table;
+                if (tableFile != null)
+                    tableFile.close();
+                tableFile = new RandomAccessFile(table.getFileName(), "rw");
+                // Get table context
+//                if (pageBuffer.size() == 0)
+//                    pageBuffer.add(new Page(table));
+            } catch (FileNotFoundException e) {
+                System.out.println("Problems in RandomAccessFile creation");
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
     }
 
     /*
@@ -156,7 +157,7 @@ public class LoadEngine {
     // return buffer position for loaded page
     public int loadPageInBuffer(int pageIndex) throws ReadPageException {
         for (int i = 0; i < pageBuffer.size(); ++i) {
-            if (pageBuffer.get(i).pageId == pageIndex && table.getName().equals(pageBuffer.get(i).table.getName())) {
+            if (pageBuffer.get(i).pageId == pageIndex + 1 && table.getName().equals(pageBuffer.get(i).table.getName())) {
                 return i;
             }
         }
@@ -164,7 +165,7 @@ public class LoadEngine {
         int bufferPos = nextBufferPos();
         if (bufferPos >= 0) {
             Page pageToFill = pageBuffer.get(bufferPos);
-            pageToFill.pageId = pageIndex;
+            pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
             loadPageFromFile(pageToFill);
             pageBuffer.add(bufferPos, pageToFill);
@@ -203,8 +204,8 @@ public class LoadEngine {
     /*
         Find in hashmap index of page or load page if it's not in buffer
      */
-    public Page getPageFromBuffer(int pageIndex) throws ReadPageException {
-        return pageBuffer.get(loadPageInBuffer(pageIndex));
+    public Page getPageFromBuffer(int pageID) throws ReadPageException {
+        return pageBuffer.get(loadPageInBuffer(pageID - 1));
     }
 
     public void loadPageFromFile(Page fillPage) {
@@ -249,8 +250,8 @@ public class LoadEngine {
 
     public void storePageInFile(int pageIndex) {
         try {
-            if (tableFile.length() / Page.PAGE_SIZE <= pageIndex + 1) {
-                tableFile.setLength(Page.PAGE_SIZE * (pageIndex + 1));
+            if (tableFile.length() / Page.PAGE_SIZE < pageIndex + 2) {
+                tableFile.setLength(Page.PAGE_SIZE * (pageIndex + 2));
             }
             tableFile.seek((1 + pageIndex) * Page.PAGE_SIZE);
             Page pageToWrite;

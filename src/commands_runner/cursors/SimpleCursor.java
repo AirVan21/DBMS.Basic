@@ -1,6 +1,7 @@
 package commands_runner.cursors;
 
 import buffer_manager.LoadEngine;
+import common.exceptions.ReadPageException;
 import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
@@ -22,12 +23,16 @@ public class SimpleCursor implements ICursor {
     public SimpleCursor(LoadEngine loadEngine, Table table){
         this.table = table;
         this.loadEngine = loadEngine;
-        pageNum = 0;
+        pageNum = 1;
         recordNum = -1;
         maxRecordsCount = Page.PAGE_SIZE / table.getRecordSize();
         loadEngine.switchToTable(table);
-        currentPage = loadEngine.getPageFromBuffer(pageNum);
-        currentRecord = currentPage.getRecord(recordNum);
+        try {
+            currentPage = loadEngine.getPageFromBuffer(pageNum);
+        } catch (ReadPageException e) {
+            currentPage = null;
+        }
+        currentRecord = null;
     }
 
     @Override
@@ -39,9 +44,17 @@ public class SimpleCursor implements ICursor {
                 return false;
             pageNum += 1;
             loadEngine.switchToTable(table);
-            currentPage = loadEngine.getPageFromBuffer(pageNum);
+            try {
+                currentPage = loadEngine.getPageFromBuffer(pageNum);
+            } catch (ReadPageException e) {
+                currentPage = null;
+            }
         }
+        if (currentPage == null)
+            return false;
         currentRecord = currentPage.getRecord(recordNum);
+        if (currentRecord == null)
+            return false;
         return true;
     }
 

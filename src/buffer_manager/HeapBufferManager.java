@@ -1,6 +1,7 @@
 package buffer_manager;
 
 import commands_runner.cursors.ICursor;
+import commands_runner.cursors.ProjectCursor;
 import commands_runner.cursors.SimpleCursor;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
@@ -39,7 +40,7 @@ public class HeapBufferManager extends AbstractBufferManager {
         table.setFileName(pathToTable.toAbsolutePath().toString());
         if (!sysTable.isExist(tableName)) {
             // Creating new table
-            loadEngine.switchToTable(table);
+            loadEngine.switchToNewTable(table);
             loadEngine.writeMetaPage(table);
             // Modify Sys Table
             sysTable.addRecord(tableName, pathToTable.toString());
@@ -84,9 +85,14 @@ public class HeapBufferManager extends AbstractBufferManager {
     public ICursor getCursor(Table table, Conditions conditions) {
         // Optimize this
         if (sysTable.isExist(table.getName())) {
-            String tablePath = sysTable.getTablePath(table.getName());
-            loadEngine.switchToTable(table);
-            return new SimpleCursor(loadEngine, table);
+//            String tablePath = sysTable.getTablePath(table.getName());
+//            loadEngine.switchToTable(table);
+            ICursor cursor = new SimpleCursor(loadEngine, table);
+            if (conditions != null)
+            {
+                return new ProjectCursor(cursor, conditions, table);
+            }
+            return cursor;
         } else {
             System.out.println("Not such data base file!");
         }

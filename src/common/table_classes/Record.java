@@ -25,7 +25,7 @@ public class Record {
     public Record(List<Column> columns, Conditions assignment) {
         values = new ArrayList<>();
         for (Column column : columns) {
-            values.add(assignment.getColumnValue(column.getName()));
+            values.add(((Condition)assignment.getColumnValue(column.getName())).getValue());
         }
     }
 

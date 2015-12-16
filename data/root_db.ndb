@@ -1,1 +1,1 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><dbms><table><name>root_db</name><path>/home/airvan21/GitHub/DBMS.Basic/data/root_db.ndb</path></table></dbms>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><dbms><table><name>root_db</name><path>/home/semionn/IdeaProjects/DBMS.Basic/data/root_db.ndb</path></table><table><name>person</name><path>data/person.ndb</path></table></dbms>

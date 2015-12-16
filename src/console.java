@@ -1,9 +1,9 @@
 import commands_runner.TableManager;
+import commands_runner.cursors.ICursor;
 import common.*;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import parser.SQLParser;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,21 +16,30 @@ public class console {
 
     public static void main( final String[] args ){
         String dbFolder = "data//";
-        Integer bufferPoolSize = 512;
-        TableManager tableManager = new TableManager(bufferPoolSize, dbFolder);
-        tableManager.loadTables();
-        SQLParser sqlParser = new SQLParser(tableManager);
-        System.out.println("Hello DBMS!");
-
-        testXML(tableManager);
-        //String query = "CREATE TABLE database_name.new_table(column1 INTEGER);";
-        String query = "Insert into db.person (name, age) values (\"Petr\", 22)";
-        testParser(tableManager, sqlParser, query);
-        query = "Select person.age, person.name from db.person where person.name = \"Petr\"";
-        testParser(tableManager, sqlParser, query);
+        Integer bufferPoolSize = 16;
+        try (TableManager tableManager = new TableManager(bufferPoolSize, dbFolder)) {
+            tableManager.loadTables();
+            SQLParser sqlParser = new SQLParser(tableManager);
+            System.out.println("Hello DBMS!");
+            String query;
+            createTableTest(tableManager);
+            query = "Insert into db.person (name, age) values (\"Petr\", 22)";
+            runQuery(tableManager, sqlParser, query);
+            for (int i = 0; i < 10_000; i++) {
+                insertTest(tableManager, sqlParser);
+                if (i % 100 == 0)
+                    System.out.println(String.format("%d inserted", i));
+            }
+//            query = "Select person.age, person.name from db.person where person.name = \"Petr\"";
+//            runQuery(tableManager, sqlParser, query);
+            query = "Select person.age, person.name from db.person where person.age < 25";
+            runQuery(tableManager, sqlParser, query);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void testParser(TableManager tableManager, SQLParser sqlParser, String query) {
+    private static void runQuery(TableManager tableManager, SQLParser sqlParser, String query) {
         try {
             Statement statement = sqlParser.parse(query);
             switch (statement.getType()) {
@@ -39,13 +48,15 @@ public class console {
                             (List<Column>) statement.getParam("columns"));
                     break;
                 case SELECT:
-                    tableManager.select(statement.getStringParam("table_name"),
+                    ICursor cursor = tableManager.select(statement.getStringParam("table_name"),
                             (List<ColumnSelect>) statement.getParam("columns"),
                             (Conditions) statement.getParam("conditions"));
+                    while (cursor.next()) {
+                        System.out.println(cursor.getRecord().values);
+                    }
                     break;
                 case INSERT:
                     tableManager.insert(statement.getStringParam("table_name"),
-                            (List<Column>) statement.getParam("columns"),
                             (Conditions) statement.getParam("conditions"));
                     break;
             }
@@ -54,7 +65,7 @@ public class console {
         }
     }
 
-    public static void testXML(TableManager tableManager)
+    public static void createTableTest(TableManager tableManager)
     {
         Type type = new Type(BaseType.INT);
         Column ageColumn = new Column("Age", type);
@@ -63,6 +74,17 @@ public class console {
         columns.add(ageColumn);
         columns.add(nameColumn);
         tableManager.createTable("person", columns);
+    }
+
+    public static void insertTest(TableManager tableManager, SQLParser sqlParser)
+    {
+        String[] names = { "Петя", "Вася", "Маша", "Катя"};
+        int age = 30;
+        for (String name : names) {
+            String query = String.format("Insert into db.person (name, age) values (\"%s\", %s)", name, age);
+            runQuery(tableManager, sqlParser, query);
+            age -= 5;
+        }
     }
 
 }

@@ -35,16 +35,8 @@ public class Page {
 
     public Record getRecord(int num) {
         if (num >= recordsCount)
-            for (int i = recordsCount - 1; i < num; i++) {
-                readRecord(i);
-            }
+            return null;
         return records.get(num);
-    }
-
-    void readRecord(int num) {
-        //TODO: read record from file
-        //calc offset as table_header_size + page_size * pagenum + header_size + num * record_size;
-        //DataInputStream in = new DataInputStream(new FileInputStream(table.getFileName()));
     }
 
     public List<Record> getRecords(Conditions conditions) {

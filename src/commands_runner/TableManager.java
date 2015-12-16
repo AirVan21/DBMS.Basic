@@ -5,6 +5,7 @@ import buffer_manager.IBufferManager;
 import commands_runner.cursors.ICursor;
 import common.Column;
 import common.ColumnSelect;
+import common.conditions.Condition;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Record;
@@ -17,7 +18,7 @@ import java.util.Map;
 /**
  * Created by semionn on 09.10.15.
  */
-public class TableManager implements ITableManager {
+public class TableManager implements ITableManager, AutoCloseable {
     Map<String, Table> tablesMap = new HashMap<>();
     final int maxPagesCount;
     final String dirPath;
@@ -47,12 +48,12 @@ public class TableManager implements ITableManager {
     }
 
     @Override
-    public void insert(String tableName, List<Column> columns, Conditions assignments) {
+    public void insert(String tableName, Conditions assignments) {
         if (!tablesMap.containsKey(tableName))
             throw new IllegalArgumentException(String.format("Table %s not found", tableName));
 
         Table table = tablesMap.get(tableName);
-        Record record = new Record(columns, assignments);
+        Record record = new Record(table.getColumns(), assignments);
         try {
             bufferManager.insert(table, record);
         } catch (QueryException e) {
@@ -81,6 +82,11 @@ public class TableManager implements ITableManager {
         if (!tablesMap.containsKey(tableName))
             return null;
         return tablesMap.get(tableName);
+    }
+
+    @Override
+    public void close() throws Exception {
+        flushAllTables();
     }
 
 //    ICursor createCursor(List<Page> pages, Conditions conditions)

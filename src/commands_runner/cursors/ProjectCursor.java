@@ -14,7 +14,7 @@ public class ProjectCursor implements ICursor {
     Conditions filterConditions;
     Record record = null;
 
-    ProjectCursor(ICursor cursor, Conditions filterConditions, Table table)
+    public ProjectCursor(ICursor cursor, Conditions filterConditions, Table table)
     {
         this.filterConditions = filterConditions;
         this.cursor = cursor;

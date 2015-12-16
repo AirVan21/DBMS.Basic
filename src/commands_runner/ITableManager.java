@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface ITableManager {
     void createTable(String tableName, List<Column> columns);
-    void insert(String tableName, List<Column> columns, Conditions assignments);
+    void insert(String tableName, Conditions assignments);
     ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
     void loadTables();
 

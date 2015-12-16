@@ -34,10 +34,7 @@ public class Table {
         this.columns = columns;
         this.fileName = fileName;
         recordSize = 0;
-        if (columns != null)
-            for (Column column : columns) {
-                recordSize += column.getType().getSize();
-            }
+        calcRecordSize();
     }
 
     public Column getColumn(final String columnName) {
@@ -48,7 +45,10 @@ public class Table {
     }
 
     public int getColumnIndex(Column column) {
-        return columns.indexOf(column);
+        for (int i = 0; i < columns.size(); i++)
+            if (columns.get(i).getName().equals(column.getName()))
+                return i;
+        return -1;
     }
 
     public void setRecordSize(int recordSize) {
@@ -57,7 +57,13 @@ public class Table {
 
     public int getRecordSize() {
         return recordSize;
+    }
 
+    public void calcRecordSize() {
+        if (columns != null)
+            for (Column column : columns) {
+                recordSize += column.getType().getSize();
+            }
     }
 
     public List<Column> getColumns() {

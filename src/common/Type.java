@@ -13,7 +13,7 @@ public class Type {
     BaseType baseType;
     public static final int DECLARATION_BYTE_SIZE = 8; // 4 byte for type, 4 byte for params
 
-    public static final int MAX_STRING_SIZE = 100;
+    public static final int MAX_STRING_SIZE = 10;
     public static final int MAX_STRING_BYTE_SIZE = MAX_STRING_SIZE * Utils.getCharByteSize();
 
     int size;

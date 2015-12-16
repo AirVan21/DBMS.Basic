@@ -101,21 +101,21 @@ public class SQLListener extends SQLiteBaseListener {
             }
             params.put("conditions", conditions);
 
-            List<ColumnSelect> columns = new ArrayList<>();
-            List<SQLiteParser.Result_columnContext> tempList = ctx.result_column();
-            for (SQLiteParser.Result_columnContext result_columnContext : tempList) {
-                SQLiteParser.Table_nameContext table_nameContext = result_columnContext.table_name();
-                Table columnTable = table;
-                if (table_nameContext != null) {
-                    columnTable = tableManager.getTable(table_nameContext.getText());
-                    if (columnTable == null)
-                        throw new QueryException(String.format("No table '%s' found", table_nameContext.getText()));
-                }
-                String columnName = result_columnContext.expr().column_name().getText();
-                Column column = columnTable.getColumn(columnName);
-                columns.add(new ColumnSelect(columnTable, column));
-            }
-            params.put("columns", ctx.result_column());
+//            List<ColumnSelect> columns = new ArrayList<>();
+//            List<SQLiteParser.Result_columnContext> tempList = ctx.result_column();
+//            for (SQLiteParser.Result_columnContext result_columnContext : tempList) {
+//                SQLiteParser.Table_nameContext table_nameContext = result_columnContext.table_name();
+//                Table columnTable = table;
+//                if (table_nameContext != null) {
+//                    columnTable = tableManager.getTable(table_nameContext.getText());
+//                    if (columnTable == null)
+//                        throw new QueryException(String.format("No table '%s' found", table_nameContext.getText()));
+//                }
+//                String columnName = result_columnContext.expr().column_name().getText();
+//                Column column = columnTable.getColumn(columnName);
+//                columns.add(new ColumnSelect(columnTable, column));
+//            }
+//            params.put("columns", ctx.result_column());
         } catch (Exception e) {
             statementType = StatementType.NONE;
             error_message = e.getMessage();

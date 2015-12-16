@@ -47,21 +47,22 @@ public class LoadEngine {
         Switch to exists File for table "fileName" in ../data/
     */
     public void switchToTable(Table table) {
-        try {
-            this.table = table;
-            if (tableFile != null)
-                tableFile.close();
-            tableFile = new RandomAccessFile(table.getFileName(), "rw");
-            // Get table context
-            readMetaPage(table);
-//            if (pageBuffer.size() == 0)
-//                pageBuffer.add(new Page(table));
-        } catch (FileNotFoundException e) {
-            System.out.println("Problems in RandomAccessFile creation");
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (this.table != table)
+            try {
+                this.table = table;
+                if (tableFile != null)
+                    tableFile.close();
+                tableFile = new RandomAccessFile(table.getFileName(), "rw");
+                // Get table context
+                readMetaPage(table);
+    //            if (pageBuffer.size() == 0)
+    //                pageBuffer.add(new Page(table));
+            } catch (FileNotFoundException e) {
+                System.out.println("Problems in RandomAccessFile creation");
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
     }
 
 
@@ -167,24 +168,37 @@ public class LoadEngine {
             Page pageToFill = pageBuffer.get(bufferPos);
             pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
-            loadPageFromFile(pageToFill);
-            pageBuffer.add(bufferPos, pageToFill);
+            if (checkPageInFile(pageToFill.pageId)) {
+                loadPageFromFile(pageToFill);
+                pageBuffer.add(bufferPos, pageToFill);
+            }
             return bufferPos;
         }
         // No page
         throw new ReadPageException(String.format("No page with index %s", pageIndex));
     }
 
+    private boolean checkPageInFile(int pageID) {
+        try {
+            return (pageID + 1) * Page.PAGE_SIZE <= tableFile.length();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public void storeRecordInPage(Record record) {
         try {
-            if (pageBuffer.size() < firstIncompletePageIndex)
-                storePageInFile(firstIncompletePageIndex);
+//            if (pageBuffer.size() < firstIncompletePageIndex)
+//                storePageInFile(firstIncompletePageIndex);
             int index = loadPageInBuffer(firstIncompletePageIndex);
             Page pageToAdd = pageBuffer.get(index);
             if (pageToAdd.isFull()) {
                 pageToAdd = new Page(table);
                 int last_pos = bufferPosition;
                 int nextPos = nextBufferPos();
+                firstIncompletePageIndex += 1;
+                pageToAdd.pageId = firstIncompletePageIndex + 1;
                 try {
                     tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
                     storePageInFile(index);
@@ -294,20 +308,25 @@ public class LoadEngine {
     }
 
     private int nextBufferPos() {
-        try {
-            if (tableFile.length() == Page.PAGE_SIZE) {
-                boolean flag = false;
-                //TODO: VERY STUPID WAY
-                for (int i = 0; i < pageBuffer.size(); i++)
-                    if (pageBuffer.get(i).table == table) {
-                        flag = true;
-                        break;
-                    }
-                if (!flag)
-                    return -1;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+//        try {
+//            if (tableFile.length() == Page.PAGE_SIZE) {
+//                boolean flag = false;
+//                //TODO: VERY STUPID WAY
+//                for (int i = 0; i < pageBuffer.size(); i++)
+//                    if (pageBuffer.get(i).table == table) {
+//                        flag = true;
+//                        break;
+//                    }
+//                if (!flag)
+//                    return -1;
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        if (pageBuffer.size() == 0)
+        {
+            pageBuffer.add(new Page(table));
+            return 0;
         }
         // perform algo
         bufferPosition = (bufferPosition + 1) % maxPagesCount;

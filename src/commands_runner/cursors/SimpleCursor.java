@@ -53,9 +53,7 @@ public class SimpleCursor implements ICursor {
         if (currentPage == null)
             return false;
         currentRecord = currentPage.getRecord(recordNum);
-        if (currentRecord == null)
-            return false;
-        return true;
+        return currentRecord != null;
     }
 
     @Override

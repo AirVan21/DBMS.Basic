@@ -26,7 +26,7 @@ public class console {
             query = "Insert into db.person (name, age) values (\"Petr\", 22)";
             runQuery(tableManager, sqlParser, query);
             for (int i = 0; i < 10_000; i++) {
-                insertTest(tableManager, sqlParser);
+                insertTest(tableManager, sqlParser, i);
                 if (i % 100 == 0)
                     System.out.println(String.format("%d inserted", i));
             }
@@ -51,9 +51,14 @@ public class console {
                     ICursor cursor = tableManager.select(statement.getStringParam("table_name"),
                             (List<ColumnSelect>) statement.getParam("columns"),
                             (Conditions) statement.getParam("conditions"));
+                    int counter = 0;
                     while (cursor.next()) {
                         System.out.println(cursor.getRecord().values);
+                        counter++;
+                        if (counter % 1000 == 0)
+                            System.out.println(counter);
                     }
+                    System.out.println(counter);
                     break;
                 case INSERT:
                     tableManager.insert(statement.getStringParam("table_name"),
@@ -76,14 +81,12 @@ public class console {
         tableManager.createTable("person", columns);
     }
 
-    public static void insertTest(TableManager tableManager, SQLParser sqlParser)
+    public static void insertTest(TableManager tableManager, SQLParser sqlParser, int num)
     {
-        String[] names = { "Петя", "Вася", "Маша", "Катя"};
-        int age = 30;
+        String[] names = { "Петя"};
         for (String name : names) {
-            String query = String.format("Insert into db.person (name, age) values (\"%s\", %s)", name, age);
+            String query = String.format("Insert into db.person (name, age) values (\"%s\", %s)", name, num);
             runQuery(tableManager, sqlParser, query);
-            age -= 5;
         }
     }
 

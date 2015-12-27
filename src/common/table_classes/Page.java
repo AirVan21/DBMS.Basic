@@ -29,8 +29,12 @@ public class Page {
     public Page(Table table) {
         recordsCount = 0;
         this.table = table;
-        maxRecordCount = (PAGE_SIZE - HEADER_SIZE) / table.recordSize;
+        maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
+    }
+
+    public static int calcMaxRecordCount(int recordSize) {
+        return (PAGE_SIZE - HEADER_SIZE) / recordSize;
     }
 
     public Record getRecord(int num) {

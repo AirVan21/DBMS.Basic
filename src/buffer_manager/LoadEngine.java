@@ -170,7 +170,7 @@ public class LoadEngine {
             pageToFill.table = table;
             if (checkPageInFile(pageToFill.pageId)) {
                 loadPageFromFile(pageToFill);
-                pageBuffer.add(bufferPos, pageToFill);
+//                pageBuffer.add(bufferPos, pageToFill);
             }
             return bufferPos;
         }

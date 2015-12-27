@@ -25,7 +25,7 @@ public class SimpleCursor implements ICursor {
         this.loadEngine = loadEngine;
         pageNum = 1;
         recordNum = -1;
-        maxRecordsCount = Page.PAGE_SIZE / table.getRecordSize();
+        maxRecordsCount = Page.calcMaxRecordCount(table.getRecordSize());
         loadEngine.switchToTable(table);
         try {
             currentPage = loadEngine.getPageFromBuffer(pageNum);
@@ -53,9 +53,7 @@ public class SimpleCursor implements ICursor {
         if (currentPage == null)
             return false;
         currentRecord = currentPage.getRecord(recordNum);
-        if (currentRecord == null)
-            return false;
-        return true;
+        return currentRecord != null;
     }
 
     @Override

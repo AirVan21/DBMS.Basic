@@ -60,6 +60,7 @@ public class Table {
     }
 
     public void calcRecordSize() {
+        recordSize = 0;
         if (columns != null)
             for (Column column : columns) {
                 recordSize += column.getType().getSize();
@@ -76,7 +77,7 @@ public class Table {
 
     public String getName() {
         return name;
-    }
+   }
 
     public AbstractIndex getIndex() {
         return index;

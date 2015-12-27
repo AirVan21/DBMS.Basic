@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.misc.Pair;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import common.xml.XMLBuilder;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -39,6 +40,10 @@ public class HeapBufferManager extends AbstractBufferManager {
         Path pathToTable = Paths.get(directory + table.getFileName());
         table.setFileName(pathToTable.toAbsolutePath().toString());
         if (!sysTable.isExist(tableName)) {
+            File file = new File(directory);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
             // Creating new table
             loadEngine.switchToNewTable(table);
             loadEngine.writeMetaPage(table);

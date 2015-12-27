@@ -163,14 +163,17 @@ public class LoadEngine {
             }
         }
         // Not in buffer
-        int bufferPos = nextBufferPos();
+        int bufferPos = nextBufferPos(true);
         if (bufferPos >= 0) {
             Page pageToFill = pageBuffer.get(bufferPos);
+            if (pageToFill.dirty)
+                storePageInFile(bufferPos);
             pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
+            pageToFill.getAllRecords().clear();
             if (checkPageInFile(pageToFill.pageId)) {
                 loadPageFromFile(pageToFill);
-                pageBuffer.add(bufferPos, pageToFill);
+//                pageBuffer.add(bufferPos, pageToFill);
             }
             return bufferPos;
         }
@@ -195,19 +198,19 @@ public class LoadEngine {
             Page pageToAdd = pageBuffer.get(index);
             if (pageToAdd.isFull()) {
                 pageToAdd = new Page(table);
-                int last_pos = bufferPosition;
-                int nextPos = nextBufferPos();
+                int nextPos = nextBufferPos(false);
                 firstIncompletePageIndex += 1;
                 pageToAdd.pageId = firstIncompletePageIndex + 1;
-                try {
-                    tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
+//                try {
+//                    tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
                     storePageInFile(index);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 if (pageBuffer.size() == maxPagesCount)
-                    pageBuffer.remove(last_pos);
-                pageBuffer.add(nextPos, pageToAdd);
+                    pageBuffer.set(nextPos, pageToAdd);
+                else
+                    pageBuffer.add(nextPos, pageToAdd);
             }
             pageToAdd.addRecord(record);
         } catch (ReadPageException e) {
@@ -264,19 +267,14 @@ public class LoadEngine {
 
     public void storePageInFile(int pageIndex) {
         try {
-            if (tableFile.length() / Page.PAGE_SIZE < pageIndex + 2) {
-                tableFile.setLength(Page.PAGE_SIZE * (pageIndex + 2));
+            if (pageIndex >= pageBuffer.size())
+                return;
+            Page pageToWrite = pageBuffer.get(pageIndex);
+            if (tableFile.length() / Page.PAGE_SIZE < pageToWrite.pageId + 1) {
+                tableFile.setLength(Page.PAGE_SIZE * (pageToWrite.pageId + 1));
             }
-            tableFile.seek((1 + pageIndex) * Page.PAGE_SIZE);
-            Page pageToWrite;
-            if (pageIndex >= pageBuffer.size()) {
-                pageToWrite = new Page(table);
-                pageToWrite.pageId = pageIndex + 1;
-                pageBuffer.add(pageToWrite);
-
-            } else {
-                pageToWrite = pageBuffer.get(pageIndex);
-            }
+            pageToWrite.dirty = false;
+            tableFile.seek(pageToWrite.pageId * Page.PAGE_SIZE);
             tableFile.writeInt(pageToWrite.pageId);
             tableFile.writeBoolean(pageToWrite.deleted);
             tableFile.writeBoolean(pageToWrite.dirty);
@@ -307,7 +305,7 @@ public class LoadEngine {
         }
     }
 
-    private int nextBufferPos() {
+    private int nextBufferPos(boolean add) {
 //        try {
 //            if (tableFile.length() == Page.PAGE_SIZE) {
 //                boolean flag = false;
@@ -325,13 +323,15 @@ public class LoadEngine {
 //        }
         if (pageBuffer.size() == 0)
         {
-            pageBuffer.add(new Page(table));
+            if (add)
+                pageBuffer.add(new Page(table));
             return 0;
         }
         // perform algo
         bufferPosition = (bufferPosition + 1) % maxPagesCount;
         if (bufferPosition >= pageBuffer.size())
-            pageBuffer.add(bufferPosition, new Page(table));
+            if (add)
+                pageBuffer.add(bufferPosition, new Page(table));
         return bufferPosition;
     }
 

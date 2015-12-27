@@ -22,17 +22,17 @@ public class console {
             SQLParser sqlParser = new SQLParser(tableManager);
             System.out.println("Hello DBMS!");
             String query;
-            createTableTest(tableManager);
-            query = "Insert into db.person (name, age) values (\"Petr\", 22)";
-            runQuery(tableManager, sqlParser, query);
-            for (int i = 0; i < 10_000; i++) {
-                insertTest(tableManager, sqlParser, i);
-                if (i % 100 == 0)
-                    System.out.println(String.format("%d inserted", i));
-            }
+//            createTableTest(tableManager);
+//            query = "Insert into db.person (name, age) values (\"Petr\", 22)";
+//            runQuery(tableManager, sqlParser, query);
+//            for (int i = 0; i < 10_000; i++) {
+//                insertTest(tableManager, sqlParser, i);
+//                if (i % 100 == 0)
+//                    System.out.println(String.format("%d inserted", i));
+//            }
 //            query = "Select person.age, person.name from db.person where person.name = \"Petr\"";
 //            runQuery(tableManager, sqlParser, query);
-            query = "Select person.age, person.name from db.person where person.age < 25";
+            query = "Select person.age, person.name from db.person where person.age >= 0";
             runQuery(tableManager, sqlParser, query);
         } catch (Exception e) {
             e.printStackTrace();

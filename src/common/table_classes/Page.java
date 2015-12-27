@@ -22,12 +22,11 @@ public class Page {
     static final int HEADER_SIZE = 8 + 3; //TODO: more accurate and explicit
 
     ArrayList<Record> records;
-    int recordsCount;
 
     final int maxRecordCount;
 
     public Page(Table table) {
-        recordsCount = 0;
+        pageId = 1;
         this.table = table;
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
@@ -38,7 +37,7 @@ public class Page {
     }
 
     public Record getRecord(int num) {
-        if (num >= recordsCount)
+        if (num >= records.size())
             return null;
         return records.get(num);
     }
@@ -63,13 +62,13 @@ public class Page {
 
     public void addRecord(Record record) {
         records.add(record);
-        recordsCount += 1;
-        if (recordsCount >= maxRecordCount)
+        dirty = true;
+        if (records.size() >= maxRecordCount)
             full = true;
     }
 
     public int getRecordsCount() {
-        return recordsCount;
+        return records.size();
     }
 
 }

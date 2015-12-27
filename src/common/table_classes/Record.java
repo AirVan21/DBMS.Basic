@@ -32,4 +32,13 @@ public class Record {
     public Object getColumnValue(int columnIndex) {
         return values.get(columnIndex);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Object obj : values) {
+            stringBuilder.append(obj.toString());
+        }
+        return stringBuilder.toString();
+    }
 }

@@ -11,7 +11,7 @@ import java.util.List;
  * Created by semionn on 09.10.15.
  */
 public interface ITableManager {
-    void createTable(String tableName, List<Column> columns);
+    boolean createTable(String tableName, List<Column> columns);
     void insert(String tableName, Conditions assignments);
     ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
     void loadTables();

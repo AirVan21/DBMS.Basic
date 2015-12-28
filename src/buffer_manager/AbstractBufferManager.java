@@ -11,7 +11,9 @@ import java.util.List;
 public abstract class AbstractBufferManager implements IBufferManager {
     // Up to 256 Pages
     int maxPagesCount = 256;
-    public static final Path DATA_ROOT_DB_FILE = Paths.get("data//root_db.ndb");
+    public static final String DATA_ROOT_DB_NAME = "root_db.ndb";
+    public static Path DATA_ROOT_DB_FILE;
+
     // Buffer managers with different structure
     List<IBufferManager> bufferManagerList;
 

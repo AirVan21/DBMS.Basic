@@ -19,7 +19,7 @@ public interface IBufferManager {
 
     void insert(Table table, Record record) throws QueryException;
 
-    void createTable(String directory, Table table);
+    boolean createTable(String directory, Table table);
 
     Map<String,Table> loadTables();
 

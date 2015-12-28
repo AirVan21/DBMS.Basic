@@ -1,7 +1,6 @@
 package parser;
 
 import commands_runner.ITableManager;
-import commands_runner.TableManager;
 import common.*;
 import common.conditions.ComparisonType;
 import common.conditions.Condition;
@@ -74,30 +73,7 @@ public class SQLListener extends SQLiteBaseListener {
 
             Conditions conditions = new Conditions();
             for (SQLiteParser.ExprContext expression : ctx.expr()) {
-                String columnName = "";
-                Integer depth = 0;
-                if (expression.expr(0).column_name() != null)
-                    columnName = expression.expr(0).column_name().getText();
-                else {
-                    columnName = expression.expr(0).expr(0).column_name().getText();
-                    depth = 1;
-                }
-                Column column = table.getColumn(columnName);
-                if (column == null)
-                    throw new QueryException(String.format("No column '%s' find in table '%s'", table.getName(), columnName));
-
-
-                String comparison = expression.children.get(1).getText();
-                ComparisonType comparisonType = ComparisonType.fromString(comparison);
-
-
-                String valueText = expression.expr(1).getText();
-                Object value = column.getType().castFromString(valueText);
-                if (value == null)
-                    throw new QueryException(String.format("Invalid value '%s' at column '%s', use type %s",
-                            valueText, columnName, column.getType().getName()));
-
-                conditions.addValue(new Condition(table, column, comparisonType, value));
+                conditions = getCondition(table, expression);
             }
             params.put("conditions", conditions);
 
@@ -120,6 +96,39 @@ public class SQLListener extends SQLiteBaseListener {
             statementType = StatementType.NONE;
             error_message = e.getMessage();
         }
+    }
+
+    private Conditions getCondition(Table table, SQLiteParser.ExprContext expression) throws QueryException {
+        Conditions result = new Conditions();
+
+        String columnName;
+        String comparison = expression.children.get(1).getText();
+
+        if (comparison.toUpperCase().equals("AND")) {
+            result.addValues(getCondition(table, (SQLiteParser.ExprContext) expression.children.get(0)));
+            result.addValues(getCondition(table, (SQLiteParser.ExprContext) expression.children.get(2)));
+            return result;
+        }
+
+        ComparisonType comparisonType = ComparisonType.fromString(comparison);
+
+        if (expression.expr(0).column_name() != null)
+            columnName = expression.expr(0).column_name().getText();
+        else {
+            columnName = expression.expr(0).expr(0).column_name().getText();
+        }
+        Column column = table.getColumn(columnName);
+        if (column == null)
+            throw new QueryException(String.format("No column '%s' find in table '%s'", table.getName(), columnName));
+
+        String valueText = expression.expr(1).getText();
+        Object value = column.getType().castFromString(valueText);
+        if (value == null)
+            throw new QueryException(String.format("Invalid value '%s' at column '%s', use type %s",
+                    valueText, columnName, column.getType().getName()));
+
+        result.addValue(new Condition(table, column, comparisonType, value));
+        return result;
     }
 
     @Override

@@ -29,6 +29,12 @@ public class Conditions {
         values.add(condition);
     }
 
+    public void addValues(Conditions conditions) {
+        for (Condition condition : conditions.getValues()) {
+            addValue(condition);
+        }
+    }
+
     public List<Condition> getValues() {
         return values;
     }

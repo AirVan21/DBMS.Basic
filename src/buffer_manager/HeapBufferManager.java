@@ -27,36 +27,37 @@ public class HeapBufferManager extends AbstractBufferManager {
     private XMLBuilder sysTable;
     private LoadEngine loadEngine;
 
-    public HeapBufferManager(Integer maxPagesCount) {
+    public HeapBufferManager(Integer maxPagesCount, String dbFolder) {
         super(maxPagesCount);
         // Absolute path for root data base
+        DATA_ROOT_DB_FILE = Paths.get(dbFolder + DATA_ROOT_DB_NAME);
         sysTable = new XMLBuilder(DATA_ROOT_DB_FILE.toAbsolutePath().toString());
         loadEngine = new LoadEngine(maxPagesCount);
     }
 
     @Override
-    public void createTable(String directory, Table table) {
+    public boolean createTable(String directory, Table table) {
         String tableName = table.getName();
         Path pathToTable = Paths.get(directory + table.getFileName());
         table.setFileName(pathToTable.toAbsolutePath().toString());
-        if (!sysTable.isExist(tableName)) {
-            File file = new File(directory);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            // Creating new table
-            loadEngine.switchToNewTable(table);
-            loadEngine.writeMetaPage(table);
-            // Modify Sys Table
-            sysTable.addRecord(tableName, pathToTable.toString());
-            sysTable.storeXMLDocument();
-
-        } else {
-            System.out.println("Table name duplication!");
-            // Own exception should be thrown
+        if (sysTable.isExist(tableName)) {
+            System.out.println("Table '" + tableName + "' duplication!");
+            return false;
         }
 
-        System.out.println(table.getName());
+        File file = new File(directory);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        // Creating new table
+        loadEngine.switchToNewTable(table);
+        loadEngine.writeMetaPage(table);
+        // Modify Sys Table
+        sysTable.addRecord(tableName, pathToTable.toString());
+        sysTable.storeXMLDocument();
+        System.out.println("Created table " + table.getName());
+
+        return true;
     }
 
     @Override

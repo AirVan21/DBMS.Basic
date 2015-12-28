@@ -27,7 +27,7 @@ public class TableManager implements ITableManager, AutoCloseable {
     public TableManager(int maxPagesCount, String dirPath) {
         this.maxPagesCount = maxPagesCount;
         this.dirPath = dirPath;
-        this.bufferManager = new HeapBufferManager(maxPagesCount);
+        this.bufferManager = new HeapBufferManager(maxPagesCount, dirPath);
     }
 
     @Override
@@ -36,11 +36,14 @@ public class TableManager implements ITableManager, AutoCloseable {
     }
 
     @Override
-    public void createTable(String tableName, List<Column> columns) {
+    public boolean createTable(String tableName, List<Column> columns) {
         String fileName = generateFileName(tableName);
         Table newTable = new Table(tableName, fileName, columns);
+        if (!bufferManager.createTable(dirPath, newTable))
+            return false;
+
         tablesMap.put(tableName, newTable);
-        bufferManager.createTable(dirPath, newTable);
+        return true;
     }
 
     String generateFileName(String tableName) {

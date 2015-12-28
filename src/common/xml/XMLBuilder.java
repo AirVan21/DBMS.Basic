@@ -44,6 +44,16 @@ public class XMLBuilder {
         if(XMLFile.exists() && !XMLFile.isDirectory()) {
             uploadXMLDocument(XMLFile);
         } else {
+            try {
+                boolean created = XMLFile.getParentFile().mkdirs();
+                if (!created)
+                    throw new IOException(String.format("Directory '%s' not created", pathToSysTable));
+                created = XMLFile.createNewFile();
+                if (!created)
+                    throw new IOException(String.format("File '%s' not created", pathToSysTable));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             createXMLDocument();
             storeXMLDocument();
         }

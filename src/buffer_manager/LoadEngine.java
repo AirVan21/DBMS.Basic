@@ -55,8 +55,6 @@ public class LoadEngine {
                 tableFile = new RandomAccessFile(table.getFileName(), "rw");
                 // Get table context
                 readMetaPage(table);
-    //            if (pageBuffer.size() == 0)
-    //                pageBuffer.add(new Page(table));
             } catch (FileNotFoundException e) {
                 System.out.println("Problems in RandomAccessFile creation");
                 e.printStackTrace();
@@ -76,9 +74,6 @@ public class LoadEngine {
                 if (tableFile != null)
                     tableFile.close();
                 tableFile = new RandomAccessFile(table.getFileName(), "rw");
-                // Get table context
-//                if (pageBuffer.size() == 0)
-//                    pageBuffer.add(new Page(table));
             } catch (FileNotFoundException e) {
                 System.out.println("Problems in RandomAccessFile creation");
                 e.printStackTrace();
@@ -104,7 +99,9 @@ public class LoadEngine {
     */
     public void writeMetaPage(Table table) {
         try {
-            tableFile.setLength(Page.PAGE_SIZE);
+            if (tableFile.length() < Page.PAGE_SIZE) {
+                tableFile.setLength(Page.PAGE_SIZE);
+            }
 
             final long startByte = 0;
             tableFile.seek(startByte);
@@ -173,7 +170,6 @@ public class LoadEngine {
             pageToFill.getAllRecords().clear();
             if (checkPageInFile(pageToFill.pageId)) {
                 loadPageFromFile(pageToFill);
-//                pageBuffer.add(bufferPos, pageToFill);
             }
             return bufferPos;
         }
@@ -201,12 +197,7 @@ public class LoadEngine {
                 int nextPos = nextBufferPos(false);
                 firstIncompletePageIndex += 1;
                 pageToAdd.pageId = firstIncompletePageIndex + 1;
-//                try {
-//                    tableFile.setLength(tableFile.length() + Page.PAGE_SIZE);
-                    storePageInFile(index);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
+                storePageInFile(index);
                 if (pageBuffer.size() == maxPagesCount)
                     pageBuffer.set(nextPos, pageToAdd);
                 else
@@ -306,21 +297,6 @@ public class LoadEngine {
     }
 
     private int nextBufferPos(boolean add) {
-//        try {
-//            if (tableFile.length() == Page.PAGE_SIZE) {
-//                boolean flag = false;
-//                //TODO: VERY STUPID WAY
-//                for (int i = 0; i < pageBuffer.size(); i++)
-//                    if (pageBuffer.get(i).table == table) {
-//                        flag = true;
-//                        break;
-//                    }
-//                if (!flag)
-//                    return -1;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         if (pageBuffer.size() == 0)
         {
             if (add)
@@ -368,6 +344,7 @@ public class LoadEngine {
         for (Table table : allTables) {
             switchToTable(table);
             flushTableData();
+            writeMetaPage(table);
         }
     }
 

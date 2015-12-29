@@ -284,6 +284,7 @@ public class LoadEngine {
                             break;
                         case DOUBLE:
                             tableFile.writeDouble((double) value);
+                            break;
                         case INT:
                             tableFile.writeInt((int) value);
                             break;

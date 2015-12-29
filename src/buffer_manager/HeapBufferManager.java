@@ -55,7 +55,6 @@ public class HeapBufferManager extends AbstractBufferManager {
         // Modify Sys Table
         sysTable.addRecord(tableName, pathToTable.toString());
         sysTable.storeXMLDocument();
-        System.out.println("Created table " + table.getName());
 
         return true;
     }

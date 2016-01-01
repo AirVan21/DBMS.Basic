@@ -8,6 +8,7 @@ import common.oracles.TableStatistics;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -24,10 +25,6 @@ public class Table {
 
     TableStatistics tableStatistics = new TableStatistics();
     AbstractIndex index = null;
-
-    public void setColumns(List<Column> columns) {
-        this.columns = columns;
-    }
 
     public Table(String name, String fileName, List<Column> columns){
         this.name = name;
@@ -79,6 +76,15 @@ public class Table {
         return fileName;
     }
 
+    public String getIndexFileName() {
+        int pos = fileName.lastIndexOf(".");
+        String result = fileName;
+        if (pos > 0) {
+            result = fileName.substring(0, pos);
+        }
+        return result + ".idx";
+    }
+
     public String getName() {
         return name;
    }
@@ -93,5 +99,9 @@ public class Table {
 
     public void setIndex(AbstractIndex index) {
         this.index = index;
+    }
+
+    public void setColumns(List<Column> columns) {
+        this.columns = columns;
     }
 }

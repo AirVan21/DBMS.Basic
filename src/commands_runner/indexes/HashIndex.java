@@ -1,5 +1,6 @@
 package commands_runner.indexes;
 
+import commands_runner.indexes.btree.IndexType;
 import common.conditions.Conditions;
 import common.table_classes.Record;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -21,5 +22,10 @@ public class HashIndex extends AbstractIndex {
     @Override
     public void setIterator(Conditions conditions) {
 
+    }
+
+    @Override
+    public IndexType getIndexType() {
+        return IndexType.HASH;
     }
 }

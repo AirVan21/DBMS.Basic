@@ -5,12 +5,13 @@ import commands_runner.cursors.IndexCursor;
 import commands_runner.cursors.ProjectCursor;
 import commands_runner.cursors.SimpleCursor;
 import commands_runner.indexes.AbstractIndex;
+import commands_runner.indexes.btree.BTreeSerializer;
+import commands_runner.indexes.btree.IndexType;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Record;
 import common.table_classes.Table;
-import org.antlr.v4.runtime.misc.Pair;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import common.xml.SysInfoRecord;
 import common.xml.XMLBuilder;
 
 import java.io.File;
@@ -54,8 +55,12 @@ public class HeapBufferManager extends AbstractBufferManager {
         // Creating new table
         loadEngine.switchToNewTable(table);
         loadEngine.writeMetaPage(table);
+
         // Modify Sys Table
-        sysTable.addRecord(tableName, pathToTable.toString());
+        String indexType = "";
+        if (table.getIndex() != null)
+            indexType = table.getIndex().getIndexType().toString();
+        sysTable.addRecord(new SysInfoRecord(tableName, pathToTable.toString(), indexType, table.getIndexFileName()));
         sysTable.storeXMLDocument();
 
         return true;
@@ -64,11 +69,13 @@ public class HeapBufferManager extends AbstractBufferManager {
     @Override
     public Map<String, Table> loadTables() {
         Map<String, Table> result = new HashMap<>();
-        List<Pair<String, String>> content = sysTable.loadContents();
-        for (Pair<String, String> item : content) {
-            Table table = new Table(item.a, item.b, null);
+        List<SysInfoRecord> content = sysTable.loadContents();
+        for (SysInfoRecord item : content) {
+            Table table = new Table(item.tableName, item.tablePath, null);
             loadEngine.switchToTable(table);
-            result.put(item.a, table);
+            if (item.indexType.equals(IndexType.BTREE.toString()))
+                table.setIndex(BTreeSerializer.deserialize(item.indexPath, loadEngine, table));
+            result.put(item.tableName, table);
         }
         return result;
     }

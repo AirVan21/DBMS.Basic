@@ -30,8 +30,6 @@ public class LoadEngine {
     private RandomAccessFile tableFile;
     private Table table;
 
-    // pageIndex -> buffer position
-    private Map<Integer, Integer> pageIndBufferPos;
     private int firstFullPageIndex = 0;
     private int firstIncompletePageIndex = 0;
     private int bufferPosition = 0;
@@ -39,7 +37,6 @@ public class LoadEngine {
     public LoadEngine(Integer maxPages) {
         maxPagesCount = maxPages;
         usedPages = new int[maxPagesCount];
-        pageIndBufferPos = new HashMap<>();
         pageBuffer = new ArrayList<>(maxPagesCount);
     }
 
@@ -298,8 +295,7 @@ public class LoadEngine {
     }
 
     private int nextBufferPos(boolean add) {
-        if (pageBuffer.size() == 0)
-        {
+        if (pageBuffer.size() == 0) {
             if (add)
                 pageBuffer.add(new Page(table));
             return 0;

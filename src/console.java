@@ -3,6 +3,7 @@ import commands_runner.cursors.ICursor;
 import common.*;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
+import common.table_classes.Table;
 import parser.SQLParser;
 
 import java.util.ArrayList;
@@ -22,14 +23,17 @@ public class console {
             SQLParser sqlParser = new SQLParser(tableManager);
             System.out.println("Hello DBMS!");
             String query;
-//            createTableTest(tableManager);
+            createTableTest(tableManager);
+
 //            query = "Insert into db.person (name, age) values (\"Petr\", 22)";
 //            runQuery(tableManager, sqlParser, query);
-//            for (int i = 0; i < 10_000; i++) {
+//            for (int i = 0; i < 1_000; i++) {
 //                insertTest(tableManager, sqlParser, i);
 //                if (i % 100 == 0)
 //                    System.out.println(String.format("%d inserted", i));
 //            }
+            Table table = tableManager.getTable("person");
+            tableManager.createIndex(table.getName(), table.getColumn("age"));
 //            query = "Select person.age, person.name from db.person where person.name = \"Petr\"";
 //            runQuery(tableManager, sqlParser, query);
             query = "Select person.age, person.name from db.person where person.age >= 0";

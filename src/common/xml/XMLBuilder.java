@@ -75,25 +75,9 @@ public class XMLBuilder {
     }
 
     /*
-        Gets table path by it's name from systable
-     */
-    public String getTablePath(String inTableName){
-        String resultPath = "";
-        NodeList nameList = sysTable.getElementsByTagName("name");
-        NodeList pathList = sysTable.getElementsByTagName("path");
-        for (int i = 0; i < nameList.getLength(); i++) {
-            String tableName = nameList.item(i).getTextContent();
-            if (tableName.equals(inTableName)) {
-                return pathList.item(i).getTextContent();
-            }
-        }
-        return resultPath;
-    }
-
-    /*
         Adds description about new table in Sys.Database XML
     */
-    public void addRecord(String inTableName, String inTablePath)
+    public void addRecord(SysInfoRecord sysInfoRecord)
     {
         // "dbms" is a root element
         Element rootElement = sysTable.getDocumentElement();
@@ -104,13 +88,23 @@ public class XMLBuilder {
 
         // "name"  field in table record
         Element tableName = sysTable.createElement("name");
-        tableName.appendChild(sysTable.createTextNode(inTableName));
+        tableName.appendChild(sysTable.createTextNode(sysInfoRecord.tableName));
         sysTableElement.appendChild(tableName);
 
         // "path" field in table record
         Element tablePath = sysTable.createElement("path");
-        tablePath.appendChild(sysTable.createTextNode(inTablePath));
+        tablePath.appendChild(sysTable.createTextNode(sysInfoRecord.tablePath));
         sysTableElement.appendChild(tablePath);
+
+        // "indexType" record
+        Element indexType = sysTable.createElement("indexType");
+        indexType.appendChild(sysTable.createTextNode(sysInfoRecord.indexType));
+        sysTableElement.appendChild(indexType);
+
+        // "indexPath" record
+        Element indexPath = sysTable.createElement("indexPath");
+        indexPath.appendChild(sysTable.createTextNode(sysInfoRecord.indexPath));
+        sysTableElement.appendChild(indexPath);
     }
 
     /*
@@ -138,14 +132,19 @@ public class XMLBuilder {
     /*
          Table content reader
     */
-    public List<Pair<String, String>> loadContents() {
-        List<Pair<String, String>> content = new ArrayList<>();
+    public List<SysInfoRecord> loadContents() {
+        List<SysInfoRecord> content = new ArrayList<>();
         NodeList nameList = sysTable.getElementsByTagName("name");
         NodeList pathList = sysTable.getElementsByTagName("path");
+        NodeList indexTypeList = sysTable.getElementsByTagName("indexType");
+        NodeList indexPathList = sysTable.getElementsByTagName("indexPath");
         String rootdbPath = AbstractBufferManager.DATA_ROOT_DB_FILE.toAbsolutePath().toString();
         for (int i = 0; i < nameList.getLength(); i++) {
             if (!pathList.item(i).getTextContent().equals(rootdbPath))
-                content.add(new Pair<>(nameList.item(i).getTextContent(), pathList.item(i).getTextContent()));
+                content.add(new SysInfoRecord(nameList.item(i).getTextContent(),
+                                            pathList.item(i).getTextContent(),
+                                            indexTypeList.item(i - 1).getTextContent(),
+                                            indexPathList.item(i - 1).getTextContent()));
         }
         return content;
     }

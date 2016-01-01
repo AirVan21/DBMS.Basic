@@ -11,7 +11,6 @@ import parser.SQLParser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import static org.junit.Assert.*;
 
@@ -149,7 +148,7 @@ public class mainTest {
         assertNotNull(column);
 
         SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 10000;
+        final int insertCount = 1000;
         for (int i = 0; i < insertCount; i++) {
             String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
             runInsert(sqlParser, query);
@@ -157,9 +156,9 @@ public class mainTest {
 
         manager.createIndex(tableName, column);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
-                                        "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
+                    "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
             int count = runSelect(sqlParser, query);
             assertEquals(2, count);
         }
@@ -181,7 +180,7 @@ public class mainTest {
             if (files == null)
                 return true;
 
-            for (File file: files) {
+            for (File file : files) {
                 if (file.isDirectory())
                     deleteDirectory(file);
                 else

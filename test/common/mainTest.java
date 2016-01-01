@@ -11,6 +11,7 @@ import parser.SQLParser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import static org.junit.Assert.*;
 
@@ -116,8 +117,7 @@ public class mainTest {
     }
 
     @Test
-    public void insertRightTest()
-    {
+    public void insertRightTest() {
         String tableName = "testTable";
         createTableRightColumnsTest();
         Table table = manager.getTable(tableName);
@@ -130,11 +130,39 @@ public class mainTest {
         assertEquals(count, 1);
     }
 
-    @Test (expected = Exception.class)
-    public void insertWrongTableTest()
-    {
+    @Test(expected = Exception.class)
+    public void insertWrongTableTest() {
         String tableName = "testTable";
         manager.insert(tableName, new Conditions());
+    }
+
+    @Test()
+    public void createIndexTest() {
+        String tableName = "testTable";
+        Column ageColumn = new Column("Age", new Type(BaseType.INT));
+        Column nameColumn = new Column("Name", Type.createType("varchar", 20));
+        List<Column> columns = new ArrayList<>();
+        columns.add(ageColumn);
+        columns.add(nameColumn);
+        assertTrue(manager.createTable(tableName, columns));
+        Column column = manager.getTable(tableName).getColumns().get(0);
+        assertNotNull(column);
+
+        SQLParser sqlParser = new SQLParser(manager);
+        final int insertCount = 10000;
+        for (int i = 0; i < insertCount; i++) {
+            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
+            runInsert(sqlParser, query);
+        }
+
+        manager.createIndex(tableName, column);
+
+        for (int i = 0; i < 100; i++) {
+            String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
+                                        "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
+            int count = runSelect(sqlParser, query);
+            assertEquals(2, count);
+        }
     }
 
     @After
@@ -151,7 +179,7 @@ public class mainTest {
             File[] files = directory.listFiles();
 
             if (files == null)
-                return  true;
+                return true;
 
             for (File file: files) {
                 if (file.isDirectory())
@@ -182,8 +210,10 @@ public class mainTest {
                     (Conditions) statement.getParam("conditions"));
 
             int counter = 0;
-            while (cursor.next())
+            while (cursor.next()) {
                 counter++;
+                System.out.println(cursor.getRecord());
+            }
 
             return counter;
         } catch (QueryException e) {

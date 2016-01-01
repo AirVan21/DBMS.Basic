@@ -67,6 +67,10 @@ public class Table {
             }
     }
 
+    public int calcMaxRecordCount() {
+        return Page.calcMaxRecordCount(recordSize);
+    }
+
     public List<Column> getColumns() {
         return columns;
     }
@@ -87,4 +91,7 @@ public class Table {
         this.fileName = fileName;
     }
 
+    public void setIndex(AbstractIndex index) {
+        this.index = index;
+    }
 }

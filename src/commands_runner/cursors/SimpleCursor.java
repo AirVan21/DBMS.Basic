@@ -60,4 +60,12 @@ public class SimpleCursor implements ICursor {
     public Record getRecord() {
         return currentRecord;
     }
+
+    public int getPageNum() {
+        return pageNum;
+    }
+
+    public int getRecordNum() {
+        return recordNum;
+    }
 }

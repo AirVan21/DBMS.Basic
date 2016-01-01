@@ -25,6 +25,8 @@ public interface IBufferManager {
 
     void flushAllData();
 
+    LoadEngine getLoadEngine();
+
     //Main
     // |
     //->SELECT/INSERT Conditions

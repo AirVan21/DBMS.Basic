@@ -83,7 +83,7 @@ public class console {
 
     public static void insertTest(TableManager tableManager, SQLParser sqlParser, int num)
     {
-        String[] names = { "Петя"};
+        String[] names = {"Anon"};
         for (String name : names) {
             String query = String.format("Insert into db.person (name, age) values (\"%s\", %s)", name, num);
             runQuery(tableManager, sqlParser, query);

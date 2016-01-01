@@ -1,8 +1,10 @@
 package buffer_manager;
 
 import commands_runner.cursors.ICursor;
+import commands_runner.cursors.IndexCursor;
 import commands_runner.cursors.ProjectCursor;
 import commands_runner.cursors.SimpleCursor;
+import commands_runner.indexes.AbstractIndex;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Record;
@@ -88,11 +90,15 @@ public class HeapBufferManager extends AbstractBufferManager {
 
     @Override
     public ICursor getCursor(Table table, Conditions conditions) {
-        // Optimize this
         if (sysTable.isExist(table.getName())) {
-//            String tablePath = sysTable.getTablePath(table.getName());
-//            loadEngine.switchToTable(table);
-            ICursor cursor = new SimpleCursor(loadEngine, table);
+            AbstractIndex index = table.getIndex();
+            ICursor cursor;
+            if (index != null) {
+                cursor = new IndexCursor(index, conditions);
+            }
+            else {
+                cursor = new SimpleCursor(loadEngine, table);
+            }
             if (conditions != null)
             {
                 return new ProjectCursor(cursor, conditions, table);
@@ -102,5 +108,9 @@ public class HeapBufferManager extends AbstractBufferManager {
             System.out.println("Not such data base file!");
         }
         return null;
+    }
+
+    public LoadEngine getLoadEngine() {
+        return loadEngine;
     }
 }

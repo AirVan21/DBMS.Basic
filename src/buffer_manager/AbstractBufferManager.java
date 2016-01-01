@@ -24,13 +24,4 @@ public abstract class AbstractBufferManager implements IBufferManager {
 
     Integer getMaxPageCount() { return maxPagesCount; }
 
-    /* TODO:
-    Add functions:
-        Load page
-        Load page metadata
-
-        Page searching - load metadata from page and use next number to iterate = O(N)
-     */
-
-
 }

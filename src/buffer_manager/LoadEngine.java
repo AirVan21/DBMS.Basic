@@ -188,7 +188,7 @@ public class LoadEngine {
 
     public void storeRecordInPage(Record record) {
         try {
-//            if (pageBuffer.size() < firstIncompletePageIndex)
+//            if (pageBuffer.getSize() < firstIncompletePageIndex)
 //                storePageInFile(firstIncompletePageIndex);
             int index = loadPageInBuffer(firstIncompletePageIndex);
             Page pageToAdd = pageBuffer.get(index);
@@ -328,6 +328,22 @@ public class LoadEngine {
                 return;
             }
         }
+    }
+
+    public Record getRecordByOffset(int offset) {
+        int pageID = offset / Page.PAGE_SIZE;
+        int recordPos = (offset % Page.PAGE_SIZE - Page.HEADER_SIZE) / table.getRecordSize();
+        try {
+            Page page = getPageFromBuffer(pageID);
+            return page.getRecord(recordPos);
+        } catch (ReadPageException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int calcRecordOffset(int pageID, int recordNum) {
+        return Page.PAGE_SIZE * pageID + Page.HEADER_SIZE + recordNum * table.getRecordSize();
     }
 
     public void flushTableData() {

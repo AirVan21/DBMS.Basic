@@ -12,11 +12,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import buffer_manager.AbstractBufferManager;
-import org.antlr.v4.runtime.misc.Pair;
+import common.table_classes.Table;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,25 +77,9 @@ public class XMLBuilder {
     }
 
     /*
-        Gets table path by it's name from systable
-     */
-    public String getTablePath(String inTableName){
-        String resultPath = "";
-        NodeList nameList = sysTable.getElementsByTagName("name");
-        NodeList pathList = sysTable.getElementsByTagName("path");
-        for (int i = 0; i < nameList.getLength(); i++) {
-            String tableName = nameList.item(i).getTextContent();
-            if (tableName.equals(inTableName)) {
-                return pathList.item(i).getTextContent();
-            }
-        }
-        return resultPath;
-    }
-
-    /*
         Adds description about new table in Sys.Database XML
     */
-    public void addRecord(String inTableName, String inTablePath)
+    public void addRecord(SysInfoRecord sysInfoRecord)
     {
         // "dbms" is a root element
         Element rootElement = sysTable.getDocumentElement();
@@ -104,13 +90,23 @@ public class XMLBuilder {
 
         // "name"  field in table record
         Element tableName = sysTable.createElement("name");
-        tableName.appendChild(sysTable.createTextNode(inTableName));
+        tableName.appendChild(sysTable.createTextNode(sysInfoRecord.tableName));
         sysTableElement.appendChild(tableName);
 
         // "path" field in table record
         Element tablePath = sysTable.createElement("path");
-        tablePath.appendChild(sysTable.createTextNode(inTablePath));
+        tablePath.appendChild(sysTable.createTextNode(sysInfoRecord.tablePath));
         sysTableElement.appendChild(tablePath);
+
+        // "indexType" record
+        Element indexType = sysTable.createElement("indexType");
+        indexType.appendChild(sysTable.createTextNode(sysInfoRecord.indexType));
+        sysTableElement.appendChild(indexType);
+
+        // "indexPath" record
+        Element indexPath = sysTable.createElement("indexPath");
+        indexPath.appendChild(sysTable.createTextNode(sysInfoRecord.indexPath));
+        sysTableElement.appendChild(indexPath);
     }
 
     /*
@@ -138,16 +134,42 @@ public class XMLBuilder {
     /*
          Table content reader
     */
-    public List<Pair<String, String>> loadContents() {
-        List<Pair<String, String>> content = new ArrayList<>();
+    public List<SysInfoRecord> loadContents() {
+        List<SysInfoRecord> content = new ArrayList<>();
         NodeList nameList = sysTable.getElementsByTagName("name");
         NodeList pathList = sysTable.getElementsByTagName("path");
+        NodeList indexTypeList = sysTable.getElementsByTagName("indexType");
+        NodeList indexPathList = sysTable.getElementsByTagName("indexPath");
         String rootdbPath = AbstractBufferManager.DATA_ROOT_DB_FILE.toAbsolutePath().toString();
         for (int i = 0; i < nameList.getLength(); i++) {
             if (!pathList.item(i).getTextContent().equals(rootdbPath))
-                content.add(new Pair<>(nameList.item(i).getTextContent(), pathList.item(i).getTextContent()));
+                content.add(new SysInfoRecord(nameList.item(i).getTextContent(),
+                                            pathList.item(i).getTextContent(),
+                                            indexTypeList.item(i - 1).getTextContent(),
+                                            indexPathList.item(i - 1).getTextContent()));
         }
         return content;
+    }
+
+    public void updateTableInfo(Table table) {
+
+        NodeList tableList = sysTable.getElementsByTagName("table");
+
+        String rootdbPath = AbstractBufferManager.DATA_ROOT_DB_FILE.toAbsolutePath().toString();
+        for (int i = 0; i < tableList.getLength(); i++) {
+            NodeList tableParams = tableList.item(i).getChildNodes();
+            String tableName = tableParams.item(0).getTextContent();
+            Node tablePath = tableParams.item(1);
+            Node indexType = tableParams.item(2);
+            Node indexPath = tableParams.item(3);
+            if (!tableName.equals(rootdbPath))
+                if (tableName.equals(table.getName())) {
+                    tablePath.setTextContent(table.getFileName());
+                    indexType.setTextContent(table.getIndex().getIndexType().toString());
+                    indexPath.setTextContent(table.getIndexFileName());
+                    break;
+                }
+        }
     }
 
     /*

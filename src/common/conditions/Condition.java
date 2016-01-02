@@ -11,13 +11,13 @@ public class Condition {
     Table table;
     Column column;
     ComparisonType comparisonType;
-    Object value;
+    Comparable<Object> value;
 
     public Condition(Table table, Column column, ComparisonType comparisonType, Object value) {
         this.table = table;
         this.column = column;
         this.comparisonType = comparisonType;
-        this.value = value;
+        this.value = (Comparable<Object>) value;
     }
 
     public Table getTable() {
@@ -28,8 +28,12 @@ public class Condition {
         return column;
     }
 
-    public Object getValue() {
+    public Comparable<Object> getValue() {
         return value;
+    }
+
+    public ComparisonType getComparisonType() {
+        return comparisonType;
     }
 
     public boolean check(Record record)

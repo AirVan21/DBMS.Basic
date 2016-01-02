@@ -36,7 +36,7 @@ public class SQLParser implements ISQLParser{
             parser.addParseListener(sql_listener);
             parser.parse();
             if (sql_listener.getStatementType() == StatementType.NONE)
-                throw new QueryException();
+                throw new QueryException(sql_listener.error_message);
             return new Statement(sql_listener.getStatementType(), sql_listener.getParams());
         } catch (IOException e){
 

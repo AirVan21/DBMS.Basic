@@ -3,9 +3,11 @@ package commands_runner;
 import buffer_manager.HeapBufferManager;
 import buffer_manager.IBufferManager;
 import commands_runner.cursors.ICursor;
+import commands_runner.indexes.AbstractIndex;
+import commands_runner.indexes.btree.BTreeSerializer;
+import commands_runner.indexes.btree.TreeIndex;
 import common.Column;
 import common.ColumnSelect;
-import common.conditions.Condition;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Record;
@@ -81,6 +83,18 @@ public class TableManager implements ITableManager, AutoCloseable {
     }
 
     @Override
+    public void createIndex(String tableName, Column column) {
+        if (!tablesMap.containsKey(tableName))
+            throw new IllegalArgumentException(String.format("Table %s not found", tableName));
+        Table table = tablesMap.get(tableName);
+        if (table.getColumnIndex(column) < 0)
+            throw new IllegalArgumentException(String.format("Column %s not found", column.getName()));
+        AbstractIndex index = new TreeIndex(bufferManager.getLoadEngine(), table, column);
+        table.setIndex(index);
+        bufferManager.updateTableInfo(table);
+    }
+
+    @Override
     public Table getTable(String tableName) {
         if (!tablesMap.containsKey(tableName))
             return null;
@@ -90,6 +104,17 @@ public class TableManager implements ITableManager, AutoCloseable {
     @Override
     public void close() throws Exception {
         flushAllTables();
+        for (Table table : tablesMap.values()) {
+            AbstractIndex index = table.getIndex();
+            if (index != null)
+                switch (index.getIndexType()) {
+                    case BTREE:
+                        BTreeSerializer.serialize((TreeIndex) index, table.getIndexFileName());
+                        break;
+                    case HASH:
+                        break;
+                }
+        }
     }
 
 //    ICursor createCursor(List<Page> pages, Conditions conditions)
@@ -105,7 +130,7 @@ public class TableManager implements ITableManager, AutoCloseable {
 //
 //        ICursor cursor = null;
 //
-//        if (tables.size() == 1)
+//        if (tables.getSize() == 1)
 //            cursor = new SimpleCursor(pages, pages.get(0).getTable());
 //
 //        return cursor;

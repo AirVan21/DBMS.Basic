@@ -25,6 +25,10 @@ public interface IBufferManager {
 
     void flushAllData();
 
+    LoadEngine getLoadEngine();
+
+    void updateTableInfo(Table table);
+
     //Main
     // |
     //->SELECT/INSERT Conditions

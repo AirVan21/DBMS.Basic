@@ -167,6 +167,8 @@ public class SQLListener extends SQLiteBaseListener {
             for (SQLiteParser.Column_nameContext column_nameContext : tempList) {
                 String columnName = column_nameContext.any_name().getText();
                 Column column = table.getColumn(columnName);
+                if (column == null)
+                    throw new QueryException(String.format("Invalid column '%s' in table '%s'", columnName, table.getName()));
                 columns.add(column);
             }
             params.put("columns", columns);
@@ -188,7 +190,7 @@ public class SQLListener extends SQLiteBaseListener {
             params.put("conditions", conditions);
 
 
-        } catch (Exception e) {
+        } catch (QueryException e) {
             statementType = StatementType.NONE;
             error_message = e.getMessage();
         }

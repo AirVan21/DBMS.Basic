@@ -1,6 +1,7 @@
 package common.table_classes;
 
 import common.conditions.Conditions;
+import common.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
  */
 public class Page {
     public int pageId;
-    public int pinCount;
+//    public int pinCount;
     public boolean deleted;
     public boolean dirty;
     public boolean full;
@@ -19,7 +20,7 @@ public class Page {
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
 
-    static final int HEADER_SIZE = 8 + 3; //TODO: more accurate and explicit
+    public static final int HEADER_SIZE = Utils.getIntByteSize() * 2 + 3; //pageID + recordCount + deleted(1) + dirty(1) + full(1)
 
     ArrayList<Record> records;
 

@@ -30,8 +30,6 @@ public class LoadEngine {
     private RandomAccessFile tableFile;
     private Table table;
 
-    // pageIndex -> buffer position
-    private Map<Integer, Integer> pageIndBufferPos;
     private int firstFullPageIndex = 0;
     private int firstIncompletePageIndex = 0;
     private int bufferPosition = 0;
@@ -39,7 +37,6 @@ public class LoadEngine {
     public LoadEngine(Integer maxPages) {
         maxPagesCount = maxPages;
         usedPages = new int[maxPagesCount];
-        pageIndBufferPos = new HashMap<>();
         pageBuffer = new ArrayList<>(maxPagesCount);
     }
 
@@ -188,7 +185,7 @@ public class LoadEngine {
 
     public void storeRecordInPage(Record record) {
         try {
-//            if (pageBuffer.size() < firstIncompletePageIndex)
+//            if (pageBuffer.getSize() < firstIncompletePageIndex)
 //                storePageInFile(firstIncompletePageIndex);
             int index = loadPageInBuffer(firstIncompletePageIndex);
             Page pageToAdd = pageBuffer.get(index);
@@ -298,8 +295,7 @@ public class LoadEngine {
     }
 
     private int nextBufferPos(boolean add) {
-        if (pageBuffer.size() == 0)
-        {
+        if (pageBuffer.size() == 0) {
             if (add)
                 pageBuffer.add(new Page(table));
             return 0;
@@ -328,6 +324,22 @@ public class LoadEngine {
                 return;
             }
         }
+    }
+
+    public Record getRecordByOffset(int offset) {
+        int pageID = offset / Page.PAGE_SIZE;
+        int recordPos = (offset % Page.PAGE_SIZE - Page.HEADER_SIZE) / table.getRecordSize();
+        try {
+            Page page = getPageFromBuffer(pageID);
+            return page.getRecord(recordPos);
+        } catch (ReadPageException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int calcRecordOffset(int pageID, int recordNum) {
+        return Page.PAGE_SIZE * pageID + Page.HEADER_SIZE + recordNum * table.getRecordSize();
     }
 
     public void flushTableData() {

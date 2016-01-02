@@ -10,6 +10,5 @@ public class Oracle {
 
     Estimation estimateJoin(Join join) {
         throw new NotImplementedException();
-        //TODO: estimateJoin
     }
 }

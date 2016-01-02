@@ -27,6 +27,8 @@ public interface IBufferManager {
 
     LoadEngine getLoadEngine();
 
+    void updateTableInfo(Table table);
+
     //Main
     // |
     //->SELECT/INSERT Conditions

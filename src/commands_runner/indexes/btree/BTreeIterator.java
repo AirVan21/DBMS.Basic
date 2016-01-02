@@ -14,7 +14,7 @@ import java.util.List;
  * Created by semionn on 31.12.15.
  */
 public class BTreeIterator {
-    BTree bTree;
+    BTreeDB bTree;
     List<Node> leafNodes;
     Node currentNode;
     int nodePos;
@@ -28,7 +28,7 @@ public class BTreeIterator {
     Comparable<Object> leftBound, rightBound;
     boolean isLeftBoundSet, isRightBoundSet;
 
-    public BTreeIterator(TreeIndex treeIndex, BTree bTree, LoadEngine loadEngine, Conditions conditions) {
+    public BTreeIterator(TreeIndex treeIndex, BTreeDB bTree, LoadEngine loadEngine, Conditions conditions) {
         this.bTree = bTree;
         this.loadEngine = loadEngine;
         for (Condition condition : conditions.getValues()) {

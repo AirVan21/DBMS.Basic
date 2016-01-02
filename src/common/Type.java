@@ -45,7 +45,7 @@ public class Type {
 
     public static Type createType(String typeName) {
         for (BaseType baseType : BaseType.values()) {
-            if (typeName.toUpperCase() == baseType.name) {
+            if (typeName.toUpperCase().equals(baseType.name)) {
                 return new Type(baseType);
             }
         }

@@ -29,7 +29,7 @@ public enum BaseType {
             case 2:
                 return BaseType.INT;
         }
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException(((Integer)ID).toString());
     }
 
     public int getTypeNumber() {

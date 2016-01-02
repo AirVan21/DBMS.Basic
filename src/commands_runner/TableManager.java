@@ -4,6 +4,7 @@ import buffer_manager.HeapBufferManager;
 import buffer_manager.IBufferManager;
 import commands_runner.cursors.ICursor;
 import commands_runner.indexes.AbstractIndex;
+import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.TreeIndex;
 import common.Column;
 import common.ColumnSelect;
@@ -90,6 +91,7 @@ public class TableManager implements ITableManager, AutoCloseable {
             throw new IllegalArgumentException(String.format("Column %s not found", column.getName()));
         AbstractIndex index = new TreeIndex(bufferManager.getLoadEngine(), table, column);
         table.setIndex(index);
+        bufferManager.updateTableInfo(table);
     }
 
     @Override
@@ -102,6 +104,17 @@ public class TableManager implements ITableManager, AutoCloseable {
     @Override
     public void close() throws Exception {
         flushAllTables();
+        for (Table table : tablesMap.values()) {
+            AbstractIndex index = table.getIndex();
+            if (index != null)
+                switch (index.getIndexType()) {
+                    case BTREE:
+                        BTreeSerializer.serialize((TreeIndex) index, table.getIndexFileName());
+                        break;
+                    case HASH:
+                        break;
+                }
+        }
     }
 
 //    ICursor createCursor(List<Page> pages, Conditions conditions)

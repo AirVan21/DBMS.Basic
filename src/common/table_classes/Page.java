@@ -1,6 +1,7 @@
 package common.table_classes;
 
 import common.conditions.Conditions;
+import common.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class Page {
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
 
-    public static final int HEADER_SIZE = 4 + 3 + 4; //pageID(4) + deleted(1) + dirty(1) + full(1) + recordCount(4)
+    public static final int HEADER_SIZE = Utils.getIntByteSize() * 2 + 3; //pageID + recordCount + deleted(1) + dirty(1) + full(1)
 
     ArrayList<Record> records;
 

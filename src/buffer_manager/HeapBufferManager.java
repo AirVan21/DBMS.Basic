@@ -81,8 +81,14 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
+    public void updateTableInfo(Table table) {
+        sysTable.updateTableInfo(table);
+    }
+
+    @Override
     public void flushAllData() {
         loadEngine.flushAllData();
+        sysTable.storeXMLDocument();
     }
 
     @Override

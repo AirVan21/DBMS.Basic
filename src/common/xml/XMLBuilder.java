@@ -12,11 +12,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import buffer_manager.AbstractBufferManager;
-import org.antlr.v4.runtime.misc.Pair;
+import common.table_classes.Table;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,6 +149,27 @@ public class XMLBuilder {
                                             indexPathList.item(i - 1).getTextContent()));
         }
         return content;
+    }
+
+    public void updateTableInfo(Table table) {
+
+        NodeList tableList = sysTable.getElementsByTagName("table");
+
+        String rootdbPath = AbstractBufferManager.DATA_ROOT_DB_FILE.toAbsolutePath().toString();
+        for (int i = 0; i < tableList.getLength(); i++) {
+            NodeList tableParams = tableList.item(i).getChildNodes();
+            String tableName = tableParams.item(0).getTextContent();
+            Node tablePath = tableParams.item(1);
+            Node indexType = tableParams.item(2);
+            Node indexPath = tableParams.item(3);
+            if (!tableName.equals(rootdbPath))
+                if (tableName.equals(table.getName())) {
+                    tablePath.setTextContent(table.getFileName());
+                    indexType.setTextContent(table.getIndex().getIndexType().toString());
+                    indexPath.setTextContent(table.getIndexFileName());
+                    break;
+                }
+        }
     }
 
     /*

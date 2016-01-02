@@ -14,19 +14,19 @@ class Node extends Page {
     int id;
     Entry[] children;
 
-    public Node(Table table, int id, int m, int order) {
+    public Node(Table table, int id, int currLen, int order) {
         super(table);
         this.id = id;
-        this.currLen = m;
+        this.currLen = currLen;
         this.order = order;
         this.children = new Entry[order];
     }
 }
 
 class Entry {
-    Comparable key;
-    Object val;
-    Node next;
+    public Comparable key;
+    public Object val;
+    public Node next;
 
     public Entry(Comparable key, Object val, Node next) {
         this.key = key;
@@ -38,6 +38,10 @@ class Entry {
 class BTreeDB extends BTree<Comparable<Object>, Integer> {
     public BTreeDB(Table table) {
         super(table);
+    }
+
+    public BTreeDB(Table table, Node root) {
+        super(table, root);
     }
 }
 
@@ -51,11 +55,15 @@ class BTree<Key extends Comparable<Object>, Value> {
     private int counter;
 
     public BTree(Table table) {
-        this.order = table.calcMaxRecordCount();
+        this(table, null);
+    }
+
+    public BTree(Table table, Node root) {
+        this.order = BTreeSerializer.ENTRY_COUNT;
         if (order % 2 != 0)
             order++;
         counter = 0;
-        root = new Node(table, incCounter(), 0, order);
+        this.root = root != null ? root : new Node(table, incCounter(), 0, order);
         this.table = table;
     }
 
@@ -75,12 +83,32 @@ class BTree<Key extends Comparable<Object>, Value> {
         return N;
     }
 
+    public int getNodeCount() {
+        return counter;
+    }
+
     public int getHeight() {
         return height;
     }
 
+    public int getOrder() {
+        return order;
+    }
+
     public Table getTable() {
         return table;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public void setN(int n) {
+        N = n;
+    }
+
+    public void setCounter(int counter) {
+        this.counter = counter;
     }
 
     public Value get(Key key) {

@@ -143,6 +143,7 @@ public class BTreeSerializer {
             file.seek(nodePos + Utils.getIntByteSize() * 2 + i * ENTRY_SIZE);
             result.children[i] = readEntry(table, order, loadEngine, file, keyType, onePage);
         }
+        result.dirty = false;
         return loadEngine.loadIndexPageInBuffer(result, order, keyType);
     }
 

@@ -7,6 +7,7 @@ import common.utils.Utils;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -19,6 +20,8 @@ public class Page {
     public boolean dirty;
     public boolean full;
     public Table table;
+
+    public BitSet deletedMask;
 
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
@@ -34,6 +37,7 @@ public class Page {
         this.table = table;
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
+        deletedMask = new BitSet();
     }
 
     public static int calcMaxRecordCount(int recordSize) {
@@ -83,4 +87,14 @@ public class Page {
         throw new OperationNotSupportedException();
     }
 
+    public int deleteRecords(Conditions conditions) {
+        int removedCount = 0;
+        for (int i = 0; i < records.size(); i++) {
+            if (conditions.check(records.get(i))) {
+                deletedMask.set(i);
+                removedCount++;
+            }
+        }
+        return removedCount;
+    }
 }

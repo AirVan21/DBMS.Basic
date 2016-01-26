@@ -207,20 +207,14 @@ public class mainTest {
         Column column = manager.getTable(tableName).getColumns().get(0);
         assertNotNull(column);
 
-
-        final int default_age = 25;
         SQLParser sqlParser = new SQLParser(manager);
-        String queryInsert = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + default_age + ")";
-        Statement statement = createStatement(sqlParser, queryInsert);
-
-        final int insertCount = 100;
+        final int insertCount = 2000;
         for (int i = 0; i < insertCount; i++) {
-            manager.insert(statement.getStringParam("table_name"),
-                    (Conditions) statement.getParam("conditions"));
+            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
+            runInsert(sqlParser, query);
         }
 
         manager.createIndex(tableName, column);
-
 
         for (int i = 0; i < 20; i++) {
             String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
@@ -228,6 +222,27 @@ public class mainTest {
             int count = runSelect(sqlParser, query);
             assertEquals(2, count);
         }
+    }
+
+    @Test
+    public void deleteTest() {
+        String tableName = "testTable";
+        createTableRightColumnsTest();
+        Table table = manager.getTable(tableName);
+        assertNotNull(table);
+        SQLParser sqlParser = new SQLParser(manager);
+        String query = "Insert into db." + tableName + " (name, age, salary) values (\"Petr\", 22, 23504.5)";
+        runInsert(sqlParser, query);
+        query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
+        int count = runSelect(sqlParser, query);
+        assertEquals(1, count);
+
+        query = "Delete from " + tableName + " where age = 21 and salary < 25000";
+        int deletedCount = runDelete(sqlParser, query);
+        assertEquals(0, deletedCount);
+        query = "Delete from " + tableName + " where age = 22 and salary < 25000";
+        deletedCount = runDelete(sqlParser, query);
+        assertEquals(1, deletedCount);
     }
 
     @After
@@ -281,6 +296,19 @@ public class mainTest {
             }
 
             return counter;
+        } catch (QueryException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    private int runDelete(SQLParser sqlParser, String query) {
+        try {
+            Statement statement = sqlParser.parse(query);
+            int count = manager.delete(statement.getStringParam("table_name"),
+                    (Conditions) statement.getParam("conditions"));
+            System.out.println(count);
+            return count;
         } catch (QueryException e) {
             e.printStackTrace();
             return -1;

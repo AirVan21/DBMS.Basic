@@ -9,6 +9,7 @@ import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.IndexType;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
+import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
 import common.xml.SysInfoRecord;
@@ -102,7 +103,7 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public ICursor getCursor(Table table, Conditions conditions) {
+    public ICursor getCursor(Table table, Conditions conditions) throws QueryException  {
         if (sysTable.isExist(table.getName())) {
             AbstractIndex index = table.getIndex();
             ICursor cursor;
@@ -118,12 +119,30 @@ public class HeapBufferManager extends AbstractBufferManager {
             }
             return cursor;
         } else {
-            System.out.println("Not such data base file!");
+            throw new QueryException("Trying select from table which do not exist!");
         }
-        return null;
     }
 
     public LoadEngine getLoadEngine() {
         return loadEngine;
+    }
+
+    @Override
+    public int delete(Table table, Conditions conditions) throws QueryException {
+        if (sysTable.isExist(table.getName())) {
+            int pageNum = 1;
+            loadEngine.switchToTable(table);
+            Page currentPage = loadEngine.getPageFromBuffer(pageNum);
+            int removedCount = 0;
+            while (loadEngine.sizeInPages() >= pageNum) {
+                if (currentPage != null)
+                    removedCount += currentPage.deleteRecords(conditions);
+                pageNum += 1;
+                loadEngine.switchToTable(table);
+                currentPage = loadEngine.getPageFromBuffer(pageNum);
+            }
+            return removedCount;
+        }
+        throw new QueryException("Trying select from table which do not exist!");
     }
 }

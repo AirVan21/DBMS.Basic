@@ -15,7 +15,7 @@ import java.util.Map;
  * Created by semionn on 09.10.15.
  */
 public interface IBufferManager {
-    ICursor getCursor(Table table, Conditions conditions);
+    ICursor getCursor(Table table, Conditions conditions) throws QueryException ;
 
     void insert(Table table, Record record) throws QueryException;
 
@@ -28,6 +28,8 @@ public interface IBufferManager {
     LoadEngine getLoadEngine();
 
     void updateTableInfo(Table table);
+
+    int delete(Table table, Conditions conditions) throws QueryException;
 
     //Main
     // |

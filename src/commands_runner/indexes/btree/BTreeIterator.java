@@ -91,7 +91,7 @@ public class BTreeIterator {
     }
 
     public boolean next() {
-        if (isRightBoundSet && nodePos >= lastNodePos && entryPos > lastEntryPos)
+        if (isRightBoundSet && (nodePos == lastNodePos && entryPos > lastEntryPos || nodePos > lastNodePos) )
             return false;
         entryPos++;
         if (entryPos >= currentNode.currLen) {

@@ -91,6 +91,7 @@ public class TableManager implements ITableManager, AutoCloseable {
             throw new IllegalArgumentException(String.format("Column %s not found", column.getName()));
         AbstractIndex index = new TreeIndex(bufferManager.getLoadEngine(), table, column);
         table.setIndex(index);
+        index.fillIndex();
         bufferManager.updateTableInfo(table);
     }
 
@@ -109,7 +110,7 @@ public class TableManager implements ITableManager, AutoCloseable {
             if (index != null)
                 switch (index.getIndexType()) {
                     case BTREE:
-                        BTreeSerializer.serialize((TreeIndex) index, table.getIndexFileName());
+                        BTreeSerializer.serialize((TreeIndex) index, bufferManager.getLoadEngine(), table.getIndexFileName());
                         break;
                     case HASH:
                         break;

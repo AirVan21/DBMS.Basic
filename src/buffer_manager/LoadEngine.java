@@ -1,8 +1,8 @@
 package buffer_manager;
 
+import commands_runner.indexes.btree.BTreeSerializer;
 import common.BaseType;
 import common.Column;
-import common.NullObject;
 import common.Type;
 import common.conditions.ComparisonType;
 import common.conditions.Condition;
@@ -12,12 +12,11 @@ import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
 import common.utils.Utils;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -150,9 +149,11 @@ public class LoadEngine {
     }
 
     // return buffer position for loaded page
-    public int loadPageInBuffer(int pageIndex) throws ReadPageException {
+    public int loadTablePageInBuffer(int pageIndex) throws ReadPageException {
         for (int i = 0; i < pageBuffer.size(); ++i) {
-            if (pageBuffer.get(i).pageId == pageIndex + 1 && table.getName().equals(pageBuffer.get(i).table.getName())) {
+            if (pageBuffer.get(i).pageId == pageIndex + 1 &&
+                    table.getName().equals(pageBuffer.get(i).table.getName()) &&
+                    !pageBuffer.get(i).isIndex()) {
                 return i;
             }
         }
@@ -162,6 +163,25 @@ public class LoadEngine {
             Page pageToFill = pageBuffer.get(bufferPos);
             if (pageToFill.dirty)
                 storePageInFile(bufferPos);
+            if (pageToFill.isIndex()) {
+//                try {
+//                    RandomAccessFile file = new RandomAccessFile(table.getIndexFileName(), "rw");
+//                    switch (pageToFill.getIndexType()) {
+//                        case BTREE:
+//                            BTreeSerializer.writeNodePage(pageToFill, this, file, table.getIndex().getKeyType());
+//                            break;
+//                        case HASH:
+//                            break;
+//                    }
+//                    file.close();
+//                } catch (IOException | OperationNotSupportedException e) {
+//                    e.printStackTrace();
+//                }
+                storeIndexPageInFile(bufferPos, table.getIndex().getKeyType());
+                pageBuffer.set(bufferPos, new Page(table));
+                pageToFill = pageBuffer.get(bufferPos);
+            }
+
             pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
             pageToFill.getAllRecords().clear();
@@ -172,6 +192,41 @@ public class LoadEngine {
         }
         // No page
         throw new ReadPageException(String.format("No page with index %s", pageIndex));
+    }
+
+    public int loadTreeIndexPageInBuffer(int pageID, int order, Type keyType) throws ReadPageException {
+        int bufferPos = findIndexPage(pageID);
+        if (bufferPos != -1)
+            return bufferPos;
+        try {
+            RandomAccessFile file = new RandomAccessFile(table.getIndexFileName(), "rw");
+            int pos = BTreeSerializer.readNodePage(pageID, table, order, this, file, keyType, true);
+            file.close();
+            return pos;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        throw new ReadPageException(String.format("No page with index %s", pageID));
+    }
+
+    public int loadIndexPageInBuffer(Page page, int order, Type keyType) {
+        int bufferPos = findIndexPage(page.pageId);
+        if (bufferPos == -1)
+            bufferPos = nextBufferPos(true);
+        storePage(bufferPos, order, keyType);
+        pageBuffer.set(bufferPos, page);
+        return bufferPos;
+    }
+
+    public int findIndexPage(int pageID) {
+        for (int i = 0; i < pageBuffer.size(); ++i) {
+            if (pageBuffer.get(i).pageId == pageID &&
+                    table.getName().equals(pageBuffer.get(i).table.getName()) &&
+                    pageBuffer.get(i).isIndex()) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private boolean checkPageInFile(int pageID) {
@@ -187,7 +242,7 @@ public class LoadEngine {
         try {
 //            if (pageBuffer.getSize() < firstIncompletePageIndex)
 //                storePageInFile(firstIncompletePageIndex);
-            int index = loadPageInBuffer(firstIncompletePageIndex);
+            int index = loadTablePageInBuffer(firstIncompletePageIndex);
             Page pageToAdd = pageBuffer.get(index);
             if (pageToAdd.isFull()) {
                 pageToAdd = new Page(table);
@@ -207,10 +262,24 @@ public class LoadEngine {
     }
 
     /*
-        Find in hashmap index of page or load page if it's not in buffer
+        Find in index of page or load page if it's not in buffer
      */
-    public Page getPageFromBuffer(int pageID) throws ReadPageException {
-        return pageBuffer.get(loadPageInBuffer(pageID - 1));
+    public Page getPageFromBuffer(int pageID){
+        try {
+            return pageBuffer.get(loadTablePageInBuffer(pageID - 1));
+        } catch (ReadPageException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Page getTreeIndexPageFromBuffer(int pageID, int order, Type keyType) {
+        try {
+            return pageBuffer.get(loadTreeIndexPageInBuffer(pageID, order, keyType));
+        } catch (ReadPageException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void loadPageFromFile(Page fillPage) {
@@ -253,11 +322,19 @@ public class LoadEngine {
         }
     }
 
-    public void storePageInFile(int pageIndex) {
+    public void storePage(int bufferPos, int order, Type keyType) {
+        Page page = pageBuffer.get(bufferPos);
+        if (page.isIndex())
+            storeIndexPageInFile(page.pageId, order, keyType);
+        else
+            storePageInFile(bufferPos);
+    }
+
+    public void storePageInFile(int bufferPos) {
         try {
-            if (pageIndex >= pageBuffer.size())
+            if (bufferPos >= pageBuffer.size())
                 return;
-            Page pageToWrite = pageBuffer.get(pageIndex);
+            Page pageToWrite = pageBuffer.get(bufferPos);
             if (tableFile.length() / Page.PAGE_SIZE < pageToWrite.pageId + 1) {
                 tableFile.setLength(Page.PAGE_SIZE * (pageToWrite.pageId + 1));
             }
@@ -294,6 +371,28 @@ public class LoadEngine {
         }
     }
 
+    public void storeIndexPageInFile(int pageID, int order, Type keyType) {
+        try {
+            int bufferPos = findIndexPage(pageID);
+            if (bufferPos == -1)
+                bufferPos = loadTreeIndexPageInBuffer(pageID, order, keyType);
+
+            storeIndexPageInFile(bufferPos, keyType);
+        } catch (ReadPageException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void storeIndexPageInFile(int bufferPos, Type keyType) {
+        try {
+            RandomAccessFile file = new RandomAccessFile(table.getIndexFileName(), "rw");
+            BTreeSerializer.writeNodePage(pageBuffer.get(bufferPos), this, file, keyType);
+            file.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private int nextBufferPos(boolean add) {
         if (pageBuffer.size() == 0) {
             if (add)
@@ -303,7 +402,7 @@ public class LoadEngine {
         // perform algo
         bufferPosition = (bufferPosition + 1) % maxPagesCount;
         if (bufferPosition >= pageBuffer.size())
-            if (add)
+            if (add && pageBuffer.size() < maxPagesCount)
                 pageBuffer.add(bufferPosition, new Page(table));
         return bufferPosition;
     }
@@ -329,13 +428,10 @@ public class LoadEngine {
     public Record getRecordByOffset(int offset) {
         int pageID = offset / Page.PAGE_SIZE;
         int recordPos = (offset % Page.PAGE_SIZE - Page.HEADER_SIZE) / table.getRecordSize();
-        try {
-            Page page = getPageFromBuffer(pageID);
-            return page.getRecord(recordPos);
-        } catch (ReadPageException e) {
-            e.printStackTrace();
-        }
-        return null;
+        Page page = getPageFromBuffer(pageID);
+        if (page == null)
+            return null;
+        return page.getRecord(recordPos);
     }
 
     public int calcRecordOffset(int pageID, int recordNum) {
@@ -359,6 +455,15 @@ public class LoadEngine {
             flushTableData();
             writeMetaPage(table);
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Page page : pageBuffer) {
+            stringBuilder.append(String.format("%d %b", page.pageId, page.isIndex()));
+        }
+        return stringBuilder.toString();
     }
 
 }

@@ -1,8 +1,11 @@
 package common.table_classes;
 
+import commands_runner.cursors.IndexCursor;
+import commands_runner.indexes.btree.IndexType;
 import common.conditions.Conditions;
 import common.utils.Utils;
 
+import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +73,14 @@ public class Page {
 
     public int getRecordsCount() {
         return records.size();
+    }
+
+    public boolean isIndex() {
+        return false;
+    }
+
+    public IndexType getIndexType() throws OperationNotSupportedException {
+        throw new OperationNotSupportedException();
     }
 
 }

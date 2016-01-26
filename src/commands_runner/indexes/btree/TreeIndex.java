@@ -4,6 +4,7 @@ import buffer_manager.LoadEngine;
 import commands_runner.cursors.SimpleCursor;
 import commands_runner.indexes.AbstractIndex;
 import common.Column;
+import common.Type;
 import common.conditions.Conditions;
 import common.table_classes.Record;
 import common.table_classes.Table;
@@ -25,16 +26,20 @@ public class TreeIndex extends AbstractIndex {
     }
 
     private static BTreeDB createBTree(LoadEngine loadEngine,Table table, Column column) {
-        BTreeDB bTree = new BTreeDB(table);
+        return new BTreeDB(table, loadEngine, column.getType());
+    }
+
+    public void fillIndex() {
         int columnIndex = table.getColumnIndex(column);
         SimpleCursor cursor = new SimpleCursor(loadEngine, table);
         loadEngine.switchToTable(table);
+        int c = 1;
         while (cursor.next()) {
             Record record = cursor.getRecord();
             int recordOffset = loadEngine.calcRecordOffset(cursor.getPageNum(), cursor.getRecordNum());
             bTree.put((Comparable<Object>) record.getColumnValue(columnIndex), recordOffset);
+            System.out.println(c++);
         }
-        return bTree;
     }
 
     public TreeIndex(LoadEngine loadEngine, Table table, Column column, BTreeDB bTree) {
@@ -66,5 +71,10 @@ public class TreeIndex extends AbstractIndex {
 
     public Column getColumn() {
         return column;
+    }
+
+    @Override
+    public Type getKeyType() {
+        return column.getType();
     }
 }

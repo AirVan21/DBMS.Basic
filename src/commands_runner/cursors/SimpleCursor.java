@@ -27,11 +27,7 @@ public class SimpleCursor implements ICursor {
         recordNum = -1;
         maxRecordsCount = Page.calcMaxRecordCount(table.getRecordSize());
         loadEngine.switchToTable(table);
-        try {
-            currentPage = loadEngine.getPageFromBuffer(pageNum);
-        } catch (ReadPageException e) {
-            currentPage = null;
-        }
+        currentPage = loadEngine.getPageFromBuffer(pageNum);
         currentRecord = null;
     }
 
@@ -44,11 +40,7 @@ public class SimpleCursor implements ICursor {
                 return false;
             pageNum += 1;
             loadEngine.switchToTable(table);
-            try {
-                currentPage = loadEngine.getPageFromBuffer(pageNum);
-            } catch (ReadPageException e) {
-                currentPage = null;
-            }
+            currentPage = loadEngine.getPageFromBuffer(pageNum);
         }
         if (currentPage == null)
             return false;

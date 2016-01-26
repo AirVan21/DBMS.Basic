@@ -1,5 +1,7 @@
 package commands_runner.indexes.btree;
 
+import buffer_manager.LoadEngine;
+import common.Type;
 import common.table_classes.Page;
 import common.table_classes.Table;
 import org.antlr.v4.runtime.misc.Pair;
@@ -11,60 +13,94 @@ import org.antlr.v4.runtime.misc.Pair;
 class Node extends Page {
     int currLen;
     int order;
-    int id;
     Entry[] children;
 
     public Node(Table table, int id, int currLen, int order) {
         super(table);
-        this.id = id;
+        this.pageId = id;
         this.currLen = currLen;
         this.order = order;
         this.children = new Entry[order];
+    }
+
+    public void setID(int id) {
+        pageId = id;
+    }
+
+    public int getID() {
+        return pageId;
+    }
+
+    @Override
+    public boolean isIndex() {
+        return true;
+    }
+
+    @Override
+    public IndexType getIndexType() {
+        return IndexType.BTREE;
     }
 }
 
 class Entry {
     public Comparable key;
     public Object val;
-    public Node next;
+    public int nextID;
 
-    public Entry(Comparable key, Object val, Node next) {
+    public Entry(Comparable key, Object val, int nextID) {
         this.key = key;
         this.val = val;
-        this.next = next;
+        this.nextID = nextID;
     }
 }
 
 class BTreeDB extends BTree<Comparable<Object>, Integer> {
-    public BTreeDB(Table table) {
-        super(table);
+    public BTreeDB(Table table, LoadEngine loadEngine, Type keyType) {
+        super(table, loadEngine, keyType);
     }
 
-    public BTreeDB(Table table, Node root) {
-        super(table, root);
+    public BTreeDB(Table table, LoadEngine loadEngine, Type keyType, int rootID) {
+        super(table, loadEngine, keyType, rootID);
     }
 }
 
 class BTree<Key extends Comparable<Object>, Value> {
 
-    private Node root;
+    private int rootID;
     private int height;
     private int N;
     private Table table;
+    private LoadEngine loadEngine;
     private int order;
     private int counter;
+    private Type keyType;
 
-    public BTree(Table table) {
-        this(table, null);
+    public BTree(Table table, LoadEngine loadEngine, Type keyType) {
+        this(table, loadEngine, keyType, -1);
     }
 
-    public BTree(Table table, Node root) {
+    public BTree(Table table, LoadEngine loadEngine, Type keyType, int rootID) {
         this.order = BTreeSerializer.ENTRY_COUNT;
+        this.keyType = keyType;
+        this.table = table;
+        this.loadEngine = loadEngine;
         if (order % 2 != 0)
             order++;
-        counter = 0;
-        this.root = root != null ? root : new Node(table, incCounter(), 0, order);
-        this.table = table;
+        counter = 1;
+        if (rootID != -1)
+            this.rootID = rootID;
+        else {
+            Node node = createNode(rootID, order, -1);
+            this.rootID = node.getID();
+        }
+    }
+
+    private Node createNode(int currLen, int order, int id) {
+        if (id == -1)
+            id = incCounter();
+        Node node = new Node(table, id, currLen, order);
+        loadEngine.loadIndexPageInBuffer(node, order, keyType);
+        return node;
     }
 
     private int incCounter() {
@@ -72,11 +108,7 @@ class BTree<Key extends Comparable<Object>, Value> {
     }
 
     public Node getRoot() {
-        return root;
-    }
-
-    public boolean isEmpty() {
-        return getSize() == 0;
+        return loadNode(rootID);
     }
 
     public int getSize() {
@@ -95,6 +127,10 @@ class BTree<Key extends Comparable<Object>, Value> {
         return order;
     }
 
+    public Type getKeyType() {
+        return keyType;
+    }
+
     public Table getTable() {
         return table;
     }
@@ -111,10 +147,14 @@ class BTree<Key extends Comparable<Object>, Value> {
         this.counter = counter;
     }
 
+    public Node loadNode(int nodeID) {
+        Page result = loadEngine.getTreeIndexPageFromBuffer(nodeID, order, keyType);
+        return (Node) result;
+    }
     public Value get(Key key) {
         if (key == null)
             throw new NullPointerException("key must not be null");
-        return search(root, key, height);
+        return search(getRoot(), key, height);
     }
 
     private Value search(Node x, Key key, int ht) {
@@ -128,7 +168,7 @@ class BTree<Key extends Comparable<Object>, Value> {
         } else {
             for (int j = 0; j < x.currLen; j++) {
                 if (j + 1 == x.currLen || less(key, children[j + 1].key))
-                    return search(children[j].next, key, ht - 1);
+                    return search(loadNode(children[j].nextID), key, ht - 1);
             }
         }
         return null;
@@ -137,7 +177,7 @@ class BTree<Key extends Comparable<Object>, Value> {
     public Pair<Node, Integer> getPosition(Key key) {
         if (key == null)
             throw new NullPointerException("key must not be null");
-        return searchPosition(root, key, height);
+        return searchPosition(getRoot(), key, height);
     }
 
     private Pair<Node, Integer> searchPosition(Node x, Key key, int ht) {
@@ -158,25 +198,30 @@ class BTree<Key extends Comparable<Object>, Value> {
         }
         if (ht == 0)
             return new Pair<>(x, leftEntryNum);
-        return searchPosition(children[leftEntryNum].next, key, ht - 1);
+        return searchPosition(loadNode(children[leftEntryNum].nextID), key, ht - 1);
     }
 
     public void put(Key key, Value val) {
         if (key == null) throw new NullPointerException("key must not be null");
-        Node u = insert(root, key, val, height);
+        Node u = insert(getRoot(), key, val, height);
         N++;
         if (u == null) return;
 
-        Node t = new Node(table, incCounter(), 2, order);
-        t.children[0] = new Entry(root.children[0].key, null, root);
-        t.children[1] = new Entry(u.children[0].key, null, u);
-        root = t;
+        Node rootNode = getRoot();
+        rootNode.setID(incCounter());
+        loadEngine.storeIndexPageInFile(rootNode.pageId, order, keyType);
+
+        Node t = createNode(2, order, rootID);
+        t.children[0] = new Entry(rootNode.children[0].key, null, rootNode.pageId);
+        t.children[1] = new Entry(u.children[0].key, null, u.getID());
+        loadEngine.storeIndexPageInFile(u.getID(), order, keyType);
+        loadEngine.storeIndexPageInFile(t.getID(), order, keyType);
         height++;
     }
 
     private Node insert(Node h, Key key, Value val, int ht) {
         int j;
-        Entry t = new Entry(key, val, null);
+        Entry t = new Entry(key, val, -1);
 
         if (ht == 0) {
             for (j = 0; j < h.currLen; j++) {
@@ -185,10 +230,10 @@ class BTree<Key extends Comparable<Object>, Value> {
         } else {
             for (j = 0; j < h.currLen; j++) {
                 if ((j + 1 == h.currLen) || less(key, h.children[j + 1].key)) {
-                    Node u = insert(h.children[j++].next, key, val, ht - 1);
+                    Node u = insert(loadNode(h.children[j++].nextID), key, val, ht - 1);
                     if (u == null) return null;
                     t.key = u.children[0].key;
-                    t.next = u;
+                    t.nextID = u.getID();
                     break;
                 }
             }
@@ -206,7 +251,7 @@ class BTree<Key extends Comparable<Object>, Value> {
 
 
     private Node split(Node h) {
-        Node t = new Node(table, incCounter(), order / 2, order);
+        Node t = createNode(order / 2, order, -1);
         h.currLen = order / 2;
         for (int j = 0; j < order / 2; j++)
             t.children[j] = h.children[order / 2 + j];
@@ -214,7 +259,7 @@ class BTree<Key extends Comparable<Object>, Value> {
     }
 
     public String toString() {
-        return toString(root, height, "") + "\n";
+        return toString(getRoot(), height, "") + "\n";
     }
 
     private String toString(Node h, int ht, String indent) {
@@ -228,7 +273,7 @@ class BTree<Key extends Comparable<Object>, Value> {
         } else {
             for (int j = 0; j < h.currLen; j++) {
                 if (j > 0) s.append(indent + "(" + children[j].key + ")\n");
-                s.append(toString(children[j].next, ht - 1, indent + "     "));
+                s.append(toString(loadNode(children[j].nextID), ht - 1, indent + "     "));
             }
         }
         return s.toString();

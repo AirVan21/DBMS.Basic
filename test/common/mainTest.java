@@ -221,9 +221,10 @@ public class mainTest {
 
         manager.createIndex(tableName, column);
 
-        for (int i = 0; i < 10; i++) {
-            String query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
-                    "where age = %2$d", tableName, default_age);
+
+        for (int i = 0; i < 20; i++) {
+            String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
+                    "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
             int count = runSelect(sqlParser, query);
             assertEquals(2, count);
         }

@@ -161,8 +161,6 @@ public class LoadEngine {
         int bufferPos = nextBufferPos(true);
         if (bufferPos >= 0) {
             Page pageToFill = pageBuffer.get(bufferPos);
-            if (pageToFill.dirty)
-                storePageInFile(bufferPos);
             if (pageToFill.isIndex()) {
 //                try {
 //                    RandomAccessFile file = new RandomAccessFile(table.getIndexFileName(), "rw");
@@ -180,7 +178,8 @@ public class LoadEngine {
                 storeIndexPageInFile(bufferPos, table.getIndex().getKeyType());
                 pageBuffer.set(bufferPos, new Page(table));
                 pageToFill = pageBuffer.get(bufferPos);
-            }
+            } else if (pageToFill.dirty)
+                storePageInFile(bufferPos);
 
             pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
@@ -211,9 +210,11 @@ public class LoadEngine {
 
     public int loadIndexPageInBuffer(Page page, int order, Type keyType) {
         int bufferPos = findIndexPage(page.pageId);
-        if (bufferPos == -1)
+        if (bufferPos == -1) {
             bufferPos = nextBufferPos(true);
-        storePage(bufferPos, order, keyType);
+            //if (pageBuffer.get(bufferPos).dirty)
+            storePage(bufferPos, order, keyType);
+        }
         pageBuffer.set(bufferPos, page);
         return bufferPos;
     }

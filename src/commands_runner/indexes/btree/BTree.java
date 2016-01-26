@@ -21,6 +21,7 @@ class Node extends Page {
         this.currLen = currLen;
         this.order = order;
         this.children = new Entry[order];
+        this.dirty = true;
     }
 
     public void setID(int id) {
@@ -220,6 +221,7 @@ class BTree<Key extends Comparable<Object>, Value> {
     }
 
     private Node insert(Node h, Key key, Value val, int ht) {
+        h.dirty = true;
         int j;
         Entry t = new Entry(key, val, -1);
 

@@ -1,6 +1,7 @@
 package commands_runner.indexes.btree;
 
 import buffer_manager.LoadEngine;
+import common.Type;
 import common.conditions.ComparisonType;
 import common.conditions.Condition;
 import common.conditions.Conditions;
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public class BTreeIterator {
     BTreeDB bTree;
-    List<Node> leafNodes;
+    List<Integer> leafNodes;
     Node currentNode;
     int nodePos;
     int lastNodePos;
@@ -24,6 +25,7 @@ public class BTreeIterator {
     int lastEntryPos;
     Record currentRecord;
     LoadEngine loadEngine;
+    Type keyType;
 
     Comparable<Object> leftBound, rightBound;
     boolean isLeftBoundSet, isRightBoundSet;
@@ -31,6 +33,33 @@ public class BTreeIterator {
     public BTreeIterator(TreeIndex treeIndex, BTreeDB bTree, LoadEngine loadEngine, Conditions conditions) {
         this.bTree = bTree;
         this.loadEngine = loadEngine;
+        keyType = treeIndex.getColumn().getType();
+
+        setBounds(treeIndex, conditions);
+
+        leafNodes = new ArrayList<>();
+        fillLeafNodes(bTree.getRoot());
+        currentRecord = null;
+        entryPos = -1;
+        nodePos = 0;
+        if (isLeftBoundSet) {
+            Pair<Node, Integer> pair = bTree.getPosition(leftBound);
+            currentNode = pair.a;
+            entryPos = pair.b - 1;
+            nodePos = leafNodes.indexOf(currentNode.getID());
+        }
+        else {
+            int nodeID = leafNodes.get(nodePos);
+            currentNode = (Node) loadEngine.getTreeIndexPageFromBuffer(nodeID, bTree.getOrder(), bTree.getKeyType());
+        }
+        if (isRightBoundSet) {
+            Pair<Node, Integer> pair = bTree.getPosition(rightBound);
+            lastNodePos = leafNodes.indexOf(pair.a.getID());
+            lastEntryPos = pair.b;
+        }
+    }
+
+    private void setBounds(TreeIndex treeIndex, Conditions conditions) {
         for (Condition condition : conditions.getValues()) {
             if (condition.getColumn() == treeIndex.getColumn()) {
                 ComparisonType comparison = condition.getComparisonType();
@@ -47,35 +76,17 @@ public class BTreeIterator {
                 }
             }
         }
-
-        leafNodes = new ArrayList<>();
-        fillLeafNodes(bTree.getRoot());
-        currentRecord = null;
-        entryPos = -1;
-        nodePos = 0;
-        currentNode = leafNodes.get(0);
-        if (isLeftBoundSet) {
-            Pair<Node, Integer> pair = bTree.getPosition(leftBound);
-            currentNode = pair.a;
-            entryPos = pair.b - 1;
-            nodePos = leafNodes.indexOf(currentNode);
-        }
-        if (isRightBoundSet) {
-            Pair<Node, Integer> pair = bTree.getPosition(rightBound);
-            lastNodePos = leafNodes.indexOf(pair.a);
-            lastEntryPos = pair.b;
-        }
     }
 
     private void fillLeafNodes(Node node) {
         if (node.currLen > 0)
-            if (node.children[0].next == null)
-                leafNodes.add(node);
+            if (node.children[0].nextID == -1)
+                leafNodes.add(node.getID());
             else
                 for (int i = 0; i < node.currLen; i++) {
                     Entry entry = node.children[i];
                     if (entry != null)
-                        fillLeafNodes(entry.next);
+                        fillLeafNodes((Node) loadEngine.getTreeIndexPageFromBuffer(entry.nextID, bTree.getOrder(), keyType));
                 }
     }
 
@@ -87,7 +98,8 @@ public class BTreeIterator {
             nodePos++;
             if (nodePos >= leafNodes.size())
                 return false;
-            currentNode = leafNodes.get(nodePos);
+            int nodeID = leafNodes.get(nodePos);
+            currentNode = (Node) loadEngine.getTreeIndexPageFromBuffer(nodeID, bTree.getOrder(), bTree.getKeyType());
             entryPos = 0;
         }
         currentEntry = currentNode.children[entryPos];

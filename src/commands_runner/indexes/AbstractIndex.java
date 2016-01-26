@@ -1,6 +1,7 @@
 package commands_runner.indexes;
 
 import commands_runner.indexes.btree.IndexType;
+import common.Type;
 import common.conditions.Conditions;
 import common.table_classes.Record;
 
@@ -9,7 +10,9 @@ import common.table_classes.Record;
  */
 public abstract class AbstractIndex {
     public abstract IndexType getIndexType();
+    public abstract Type getKeyType();
     public abstract boolean next();
     public abstract Record getRecord();
     public abstract void setIterator(Conditions conditions);
+    public abstract void fillIndex();
 }

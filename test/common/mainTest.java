@@ -25,7 +25,7 @@ public class mainTest {
     @Before
     public void beforeTest() {
         deleteDirectory(new File(dbFolder));
-        Integer bufferPoolSize = 16;
+        Integer bufferPoolSize = 32;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
 
@@ -126,7 +126,67 @@ public class mainTest {
         runInsert(sqlParser, query);
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
         int count = runSelect(sqlParser, query);
-        assertEquals(count, 1);
+        assertEquals(1, count);
+    }
+
+    @Test
+    public void insertRightTestBigSameRecords() {
+        final int TEST_SIZE = 1000; // x2 different records
+        String tableName = "testTable";
+        createTableRightColumnsTest();
+        Table table = manager.getTable(tableName);
+        assertNotNull(table);
+        SQLParser sqlParser = new SQLParser(manager);
+        String queryFirst = "Insert into db." + tableName + "(name, age, salary) values (\"Petr\", 22, 23504.5)";
+        String querySecond = "Insert into db." + tableName + "(name, age, salary) values (\"Ann\", 35, 47412.0)";
+        Statement statementFirst = createStatement(sqlParser, queryFirst);
+        Statement statementSecond = createStatement(sqlParser, querySecond);
+
+        for (int i = 0; i < TEST_SIZE; ++i) {
+            manager.insert(statementFirst.getStringParam("table_name"), (Conditions) statementFirst.getParam("conditions"));
+            manager.insert(statementSecond.getStringParam("table_name"), (Conditions) statementSecond.getParam("conditions"));
+        }
+
+        int count = 0;
+
+        String queryCountFirst  = String.format("Select %1$s.age, %1$s.name from db.%1$s where %1$s.salary < 25000.0", tableName);
+        count = runSelect(sqlParser, queryCountFirst);
+        assertEquals(TEST_SIZE, count);
+
+        String queryCountSecond = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.name = \"Ann\"", tableName);
+        count = runSelect(sqlParser, queryCountSecond);
+        assertEquals(TEST_SIZE, count);
+
+        String queryCountAll  = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1%s.age > 20", tableName);
+        count = runSelect(sqlParser, queryCountAll);
+        assertEquals(TEST_SIZE * 2, count);
+    }
+
+    @Test
+    public void insertRightTestDifferentRecords() {
+        final int TEST_SIZE = 1000; // x2 different records
+        String tableName = "testTable";
+        createTableRightColumnsTest();
+        Table table = manager.getTable(tableName);
+        assertNotNull(table);
+        SQLParser sqlParser = new SQLParser(manager);
+
+        double salary = 100;
+        for (int i = 0; i < TEST_SIZE; ++i) {
+            String query = String.format("Insert into db.%1$s (name, age, salary) values (\"Ann\", 35, %2$f)", tableName, salary + 5 * i);
+            runInsert(sqlParser, query);
+        }
+
+        int count = 0;
+
+        String queryCountFirst  = String.format("Select %1$s.age, %1$s.name from db.%1$s where %1$s.salary >= 100.0 and %1$s.age = 35", tableName);
+        count = runSelect(sqlParser, queryCountFirst);
+        assertEquals(TEST_SIZE, count);
+
+        String queryCountSecond = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.salary >=130 and %1$s.salary <= 150", tableName);
+        count = runSelect(sqlParser, queryCountSecond);
+        assertEquals(5, count);
+
     }
 
     @Test(expected = Exception.class)
@@ -147,14 +207,20 @@ public class mainTest {
         Column column = manager.getTable(tableName).getColumns().get(0);
         assertNotNull(column);
 
+
+        final int default_age = 25;
         SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 2000;
+        String queryInsert = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + default_age + ")";
+        Statement statement = createStatement(sqlParser, queryInsert);
+
+        final int insertCount = 100;
         for (int i = 0; i < insertCount; i++) {
-            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
-            runInsert(sqlParser, query);
+            manager.insert(statement.getStringParam("table_name"),
+                    (Conditions) statement.getParam("conditions"));
         }
 
         manager.createIndex(tableName, column);
+
 
         for (int i = 0; i < 20; i++) {
             String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
@@ -219,5 +285,17 @@ public class mainTest {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    private Statement createStatement(SQLParser sqlParser, String query)
+    {
+        Statement statement = null;
+        try {
+            statement = sqlParser.parse(query);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
+
+        return statement;
     }
 }

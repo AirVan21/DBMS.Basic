@@ -45,7 +45,7 @@ public class indexTest {
         assertNotNull(column);
 
         SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 4500;
+        final int insertCount = 10_000;
         for (int i = 0; i < insertCount; i++) {
             String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
             TestUtils.runInsert(manager, sqlParser, query);

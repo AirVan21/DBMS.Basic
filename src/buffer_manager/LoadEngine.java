@@ -418,7 +418,18 @@ public class LoadEngine {
     public void flushTableData() {
         for (int i = 0; i < pageBuffer.size(); i++) {
             if (pageBuffer.get(i).table == table)
-                storePageInFile(i);
+                if (pageBuffer.get(i).isIndex())
+                    storeIndexPageInFile(i, table.getIndex().getKeyType());
+                else
+                    storePageInFile(i);
+        }
+    }
+
+    public void flushIndexTableData() {
+        for (int i = 0; i < pageBuffer.size(); i++) {
+            if (pageBuffer.get(i).table == table)
+                if (pageBuffer.get(i).isIndex())
+                    storeIndexPageInFile(i, table.getIndex().getKeyType());
         }
     }
 

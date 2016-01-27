@@ -29,6 +29,10 @@ public class Record {
         }
     }
 
+    public Record(List<Object> values) {
+        this.values = values;
+    }
+
     public Object getColumnValue(int columnIndex) {
         return values.get(columnIndex);
     }

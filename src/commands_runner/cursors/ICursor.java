@@ -8,4 +8,5 @@ import common.table_classes.Record;
 public interface ICursor {
     boolean next();
     Record getRecord();
+    void reset();
 }

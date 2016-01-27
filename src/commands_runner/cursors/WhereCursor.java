@@ -7,14 +7,14 @@ import common.table_classes.Table;
 /**
  * Created by semionn on 28.10.15.
  */
-public class ProjectCursor implements ICursor {
+public class WhereCursor implements ICursor {
 
     Table table;
     ICursor cursor;
     Conditions filterConditions;
     Record record = null;
 
-    public ProjectCursor(ICursor cursor, Conditions filterConditions, Table table)
+    public WhereCursor(ICursor cursor, Conditions filterConditions, Table table)
     {
         this.filterConditions = filterConditions;
         this.cursor = cursor;
@@ -34,5 +34,10 @@ public class ProjectCursor implements ICursor {
     @Override
     public Record getRecord() {
         return cursor.getRecord();
+    }
+
+    @Override
+    public void reset() {
+        cursor.reset();
     }
 }

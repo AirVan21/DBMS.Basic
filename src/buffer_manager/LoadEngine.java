@@ -17,6 +17,7 @@ import javax.naming.OperationNotSupportedException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -58,8 +59,7 @@ public class LoadEngine {
                 e.printStackTrace();
             }
     }
-
-
+    
     /*
         Creates new File for table "fileName" in ../data/
     */
@@ -162,19 +162,6 @@ public class LoadEngine {
         if (bufferPos >= 0) {
             Page pageToFill = pageBuffer.get(bufferPos);
             if (pageToFill.isIndex()) {
-//                try {
-//                    RandomAccessFile file = new RandomAccessFile(table.getIndexFileName(), "rw");
-//                    switch (pageToFill.getIndexType()) {
-//                        case BTREE:
-//                            BTreeSerializer.writeNodePage(pageToFill, this, file, table.getIndex().getKeyType());
-//                            break;
-//                        case HASH:
-//                            break;
-//                    }
-//                    file.close();
-//                } catch (IOException | OperationNotSupportedException e) {
-//                    e.printStackTrace();
-//                }
                 storeIndexPageInFile(bufferPos, table.getIndex().getKeyType());
                 pageBuffer.set(bufferPos, new Page(table));
                 pageToFill = pageBuffer.get(bufferPos);
@@ -183,7 +170,7 @@ public class LoadEngine {
 
             pageToFill.pageId = pageIndex + 1;
             pageToFill.table = table;
-            pageToFill.getAllRecords().clear();
+            pageToFill.refreshPage();
             if (checkPageInFile(pageToFill.pageId)) {
                 loadPageFromFile(pageToFill);
             }
@@ -333,40 +320,22 @@ public class LoadEngine {
 
     public void storePageInFile(int bufferPos) {
         try {
+
             if (bufferPos >= pageBuffer.size())
                 return;
             Page pageToWrite = pageBuffer.get(bufferPos);
+
             if (tableFile.length() / Page.PAGE_SIZE < pageToWrite.pageId + 1) {
                 tableFile.setLength(Page.PAGE_SIZE * (pageToWrite.pageId + 1));
             }
+
             pageToWrite.dirty = false;
+            pageToWrite.updateRecordPageBuffer();
+
             tableFile.seek(pageToWrite.pageId * Page.PAGE_SIZE);
-            tableFile.writeInt(pageToWrite.pageId);
-            tableFile.writeBoolean(pageToWrite.deleted);
-            tableFile.writeBoolean(pageToWrite.dirty);
-            tableFile.writeBoolean(pageToWrite.full);
-            tableFile.writeInt(pageToWrite.getRecordsCount());
-            List<Column> columns = table.getColumns();
-            for (Record record : pageToWrite.getAllRecords()) {
-                for (int i = 0; i < table.getColumns().size(); i++) {
-                    Object value = record.getColumnValue(i);
-                    tableFile.writeInt(columns.get(i).getType().getBaseType().getTypeNumber());
-                    switch (columns.get(i).getType().getBaseType()) {
-                        case VARCHAR:
-                            long pos = tableFile.getFilePointer();
-                            tableFile.write(((String) value).getBytes("UTF-16"));
-                            tableFile.seek(pos + Type.MAX_STRING_BYTE_SIZE);
-                            break;
-                        case DOUBLE:
-                            tableFile.writeDouble((double) value);
-                            break;
-                        case INT:
-                            tableFile.writeInt((int) value);
-                            break;
-                    }
-                }
-            }
+            tableFile.write(pageToWrite.pageBuffer.array());
             tableFile.getFD().sync();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

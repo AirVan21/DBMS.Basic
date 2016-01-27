@@ -17,11 +17,11 @@ public class Utils {
 
     public static int getIntByteSize(){
         //can be used to determine x86 or x64: System.getProperty("os.arch");
-        return 8;
+        return 4;
     }
 
     public static int getDoubleByteSize(){
-        return 16;
+        return 8;
     }
 
     public static int getMaxObjectSize() {

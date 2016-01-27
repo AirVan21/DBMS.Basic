@@ -5,6 +5,7 @@ import common.Column;
 import common.Type;
 import common.conditions.Condition;
 import common.oracles.TableStatistics;
+import common.utils.Utils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 
@@ -61,6 +62,7 @@ public class Table {
         if (columns != null)
             for (Column column : columns) {
                 recordSize += column.getType().getSize();
+                recordSize += Utils.getIntByteSize(); //TypeID fix
             }
     }
 

@@ -47,8 +47,10 @@ public class LoadEngine {
         if (this.table != table)
             try {
                 this.table = table;
-                if (tableFile != null)
+                if (tableFile != null) {
+                    tableFile.getFD().sync();
                     tableFile.close();
+                }
                 tableFile = new RandomAccessFile(table.getFileName(), "rw");
                 // Get table context
                 readMetaPage(table);
@@ -334,7 +336,7 @@ public class LoadEngine {
 
             tableFile.seek(pageToWrite.pageId * Page.PAGE_SIZE);
             tableFile.write(pageToWrite.pageBuffer.array());
-            tableFile.getFD().sync();
+//            tableFile.getFD().sync();
 
         } catch (IOException e) {
             e.printStackTrace();

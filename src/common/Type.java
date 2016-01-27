@@ -26,7 +26,7 @@ public class Type {
         this.baseType = baseType;
         switch (baseType) {
             case VARCHAR:
-                size = 4 + MAX_STRING_SIZE * Utils.getCharByteSize();
+                size = MAX_STRING_SIZE * Utils.getCharByteSize();
                 break;
             case DOUBLE:
                 size = Utils.getDoubleByteSize();

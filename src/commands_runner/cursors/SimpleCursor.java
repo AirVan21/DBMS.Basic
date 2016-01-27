@@ -1,9 +1,14 @@
 package commands_runner.cursors;
 
 import buffer_manager.LoadEngine;
+import common.Column;
+import common.ColumnSelect;
 import common.table_classes.Page;
 import common.table_classes.Record;
 import common.table_classes.Table;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by semionn on 28.10.15.
@@ -16,6 +21,7 @@ public class SimpleCursor implements ICursor {
     int recordNum;
     Record currentRecord;
     Page currentPage;
+    List<ColumnSelect> columnsSelect;
 
     int maxRecordsCount;
 
@@ -23,6 +29,9 @@ public class SimpleCursor implements ICursor {
         this.table = table;
         this.loadEngine = loadEngine;
         maxRecordsCount = Page.calcMaxRecordCount(table.getRecordSize());
+        columnsSelect = new ArrayList<>();
+        for (Column column : table.getColumns())
+            columnsSelect.add(new ColumnSelect(table, column));
         reset();
     }
 
@@ -65,5 +74,10 @@ public class SimpleCursor implements ICursor {
         loadEngine.switchToTable(table);
         currentPage = loadEngine.getPageFromBuffer(pageNum);
         currentRecord = null;
+    }
+
+    @Override
+    public List<ColumnSelect> getMetaInfo() {
+        return columnsSelect;
     }
 }

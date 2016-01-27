@@ -13,4 +13,12 @@ public class ColumnSelect {
         this.table = table;
         this.сolumn = column;
     }
+
+    public Column getСolumn() {
+        return сolumn;
+    }
+
+    public Table getTable() {
+        return table;
+    }
 }

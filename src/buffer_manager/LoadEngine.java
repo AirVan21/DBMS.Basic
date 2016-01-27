@@ -307,6 +307,12 @@ public class LoadEngine {
                 Record record = new Record(table.getColumns(), assignment);
                 fillPage.addRecord(record);
             }
+
+            // deleteMask
+            int bytesInDeleteMask = tableFile.readInt();
+            byte[] deleteMaskBytes = new byte[bytesInDeleteMask];
+            tableFile.read(deleteMaskBytes, 0, bytesInDeleteMask);
+            fillPage.deletedMask = Utils.toBitSet(deleteMaskBytes);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -332,11 +338,10 @@ public class LoadEngine {
             }
 
             pageToWrite.dirty = false;
-            pageToWrite.updateRecordPageBuffer();
+            pageToWrite.prepareForIO();
 
             tableFile.seek(pageToWrite.pageId * Page.PAGE_SIZE);
             tableFile.write(pageToWrite.pageBuffer.array());
-//            tableFile.getFD().sync();
 
         } catch (IOException e) {
             e.printStackTrace();

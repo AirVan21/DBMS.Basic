@@ -1,9 +1,7 @@
 package common;
 
 import commands_runner.TableManager;
-import commands_runner.cursors.ICursor;
 import common.conditions.Conditions;
-import common.exceptions.QueryException;
 import common.table_classes.Table;
 import org.junit.*;
 import parser.SQLParser;

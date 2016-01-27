@@ -24,7 +24,7 @@ public class mainTest {
 
     @Before
     public void beforeTest() {
-        deleteDirectory(new File(dbFolder));
+        TestUtils.deleteDirectory(new File(dbFolder));
         Integer bufferPoolSize = 16;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
@@ -123,20 +123,21 @@ public class mainTest {
         assertNotNull(table);
         SQLParser sqlParser = new SQLParser(manager);
         String query = "Insert into db." + tableName + " (name, age, salary) values (\"Petr\", 22, 23504.5)";
-        runInsert(sqlParser, query);
+        TestUtils.runInsert(manager, sqlParser, query);
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
-        int count = runSelect(sqlParser, query);
+        int count = TestUtils.runSelect(manager, sqlParser, query, null);
         assertEquals(1, count);
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.name = \"Petr\" and %1$s.salary = 23504.5" , tableName);
-        count = runSelect(sqlParser, query);
+        count = TestUtils.runSelect(manager, sqlParser, query, null);
         assertEquals(1, count);
     }
 
     @Test
     public void insertRightTestBigSameRecords() {
         final int TEST_SIZE = 50_000; // x2 same records
+        final int frequency = 1000;
         String tableName = "testTable";
         createTableRightColumnsTest();
         Table table = manager.getTable(tableName);
@@ -144,8 +145,8 @@ public class mainTest {
         SQLParser sqlParser = new SQLParser(manager);
         String queryFirst = "Insert into db." + tableName + "(name, age, salary) values (\"Petr\", 22, 23504.5)";
         String querySecond = "Insert into db." + tableName + "(name, age, salary) values (\"Ann\", 35, 47412.0)";
-        Statement statementFirst = createStatement(sqlParser, queryFirst);
-        Statement statementSecond = createStatement(sqlParser, querySecond);
+        Statement statementFirst = TestUtils.createStatement(sqlParser, queryFirst);
+        Statement statementSecond = TestUtils.createStatement(sqlParser, querySecond);
         // ((Conditions) statementFirst.getParam("conditions")).getValues().get(2) = salary + 5 * i;
 
         for (int i = 0; i < TEST_SIZE; ++i) {
@@ -153,24 +154,23 @@ public class mainTest {
             manager.insert(statementSecond.getStringParam("table_name"), (Conditions) statementSecond.getParam("conditions"));
         }
 
-        int count = 0;
-
         String queryCountFirst  = String.format("Select %1$s.age, %1$s.name from db.%1$s where %1$s.salary < 25000.0", tableName);
-        count = runSelect(sqlParser, queryCountFirst);
+        int count = TestUtils.runSelect(manager, sqlParser, queryCountFirst, frequency);
         assertEquals(TEST_SIZE, count);
 
         String queryCountSecond = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.name = \"Ann\"", tableName);
-        count = runSelect(sqlParser, queryCountSecond);
+        count = TestUtils.runSelect(manager, sqlParser, queryCountSecond, frequency);
         assertEquals(TEST_SIZE, count);
 
         String queryCountAll  = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age > 20", tableName);
-        count = runSelect(sqlParser, queryCountAll);
+        count = TestUtils.runSelect(manager, sqlParser, queryCountAll, frequency);
         assertEquals(TEST_SIZE * 2, count);
     }
 
     @Test
     public void insertRightTestDifferentRecords() {
         final int TEST_SIZE = 10_000; // different records
+        final int frequency = 1000;
         String tableName = "testTable";
         createTableRightColumnsTest();
         Table table = manager.getTable(tableName);
@@ -180,16 +180,16 @@ public class mainTest {
         double default_salary = 10_000;
         for (int i = 0; i < TEST_SIZE; ++i) {
             String query = String.format("Insert into db.%1$s (name, age, salary) values (\"Ann\", 35, %2$f)", tableName, default_salary + i);
-            runInsert(sqlParser, query);
+            TestUtils.runInsert(manager, sqlParser, query);
         }
 
         String queryCountFirst  = String.format("Select %1$s.age, %1$s.name from db.%1$s where %1$s.salary >= %2$f and %1$s.age = 35", tableName, default_salary);
-        int count = runSelect(sqlParser, queryCountFirst);
+        int count = TestUtils.runSelect(manager, sqlParser, queryCountFirst, frequency);
         assertEquals(TEST_SIZE, count);
 
         String queryCountSecond = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.salary >= %2$s",
                 tableName, default_salary + TEST_SIZE / 2);
-        count = runSelect(sqlParser, queryCountSecond);
+        count = TestUtils.runSelect(manager, sqlParser, queryCountSecond, frequency);
         assertEquals(TEST_SIZE / 2, count);
 
     }
@@ -208,16 +208,16 @@ public class mainTest {
         assertNotNull(table);
         SQLParser sqlParser = new SQLParser(manager);
         String query = "Insert into db." + tableName + " (name, age, salary) values (\"Petr\", 22, 23504.5)";
-        runInsert(sqlParser, query);
+        TestUtils.runInsert(manager, sqlParser, query);
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
-        int count = runSelect(sqlParser, query);
+        int count = TestUtils.runSelect(manager, sqlParser, query, 1);
         assertEquals(1, count);
 
         query = "Delete from " + tableName + " where age = 21 and salary < 25000";
-        int deletedCount = runDelete(sqlParser, query);
+        int deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(0, deletedCount);
         query = "Delete from " + tableName + " where age = 22 and salary < 25000";
-        deletedCount = runDelete(sqlParser, query);
+        deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(1, deletedCount);
     }
 
@@ -233,23 +233,23 @@ public class mainTest {
         double default_salary = 10000;
         for (int i = 0; i < TEST_SIZE; ++i) {
             String query = "Insert into db." + tableName + String.format(" (name, age, salary) values (\"Petr\", 22, %1$f)", default_salary + i);
-            runInsert(sqlParser, query);
+            TestUtils.runInsert(manager, sqlParser, query);
         }
 
         String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
-        int count = runSelect(sqlParser, query);
+        int count = TestUtils.runSelect(manager, sqlParser, query, 1000);
         assertEquals(TEST_SIZE, count);
 
         query = String.format("Delete from %1$s where age = 22 and salary < %2$f", tableName, default_salary + TEST_SIZE / 2);
-        int deletedCount = runDelete(sqlParser, query);
+        int deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(TEST_SIZE / 2, deletedCount);
 
         query = String.format("Delete from %1$s where age = 22 and salary > %2$f", tableName, default_salary + TEST_SIZE / 2);
-        deletedCount = runDelete(sqlParser, query);
+        deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(TEST_SIZE / 2 - 1, deletedCount);
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
-        count = runSelect(sqlParser, query);
+        count = TestUtils.runSelect(manager, sqlParser, query, 1000);
         assertEquals(1, count);
     }
 
@@ -260,82 +260,5 @@ public class mainTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static boolean deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-
-            if (files == null)
-                return true;
-
-            for (File file : files) {
-                if (file.isDirectory())
-                    deleteDirectory(file);
-                else
-                    file.delete();
-            }
-        }
-
-        return directory.delete();
-    }
-
-    private void runInsert(SQLParser sqlParser, String query) {
-        try {
-            Statement statement = sqlParser.parse(query);
-            manager.insert(statement.getStringParam("table_name"),
-                    (Conditions) statement.getParam("conditions"));
-        } catch (QueryException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private int runSelect(SQLParser sqlParser, String query) {
-        try {
-            Statement statement = sqlParser.parse(query);
-            ICursor cursor = manager.select(statement.getStringParam("table_name"),
-                    (List<ColumnSelect>) statement.getParam("columns"),
-                    (Conditions) statement.getParam("conditions"));
-
-            int counter = 0;
-
-            System.out.println("=== SELECT ===");
-            while (cursor.next()) {
-                counter++;
-                if (counter % 10000 == 0) {
-                    System.out.println(counter);
-                }
-            }
-
-            return counter;
-        } catch (QueryException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
-    private int runDelete(SQLParser sqlParser, String query) {
-        try {
-            Statement statement = sqlParser.parse(query);
-            int count = manager.delete(statement.getStringParam("table_name"),
-                    (Conditions) statement.getParam("conditions"));
-            System.out.println(count);
-            return count;
-        } catch (QueryException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
-    private Statement createStatement(SQLParser sqlParser, String query)
-    {
-        Statement statement = null;
-        try {
-            statement = sqlParser.parse(query);
-        } catch (QueryException e) {
-            e.printStackTrace();
-        }
-
-        return statement;
     }
 }

@@ -8,7 +8,7 @@ import common.conditions.Conditions;
 import common.utils.Utils;
 
 import javax.naming.OperationNotSupportedException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -25,13 +25,12 @@ public class Page {
     public boolean full;
     public Table table;
     public ByteBuffer pageBuffer;
-
     public BitSet deletedMask;
 
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
 
-    public static final int HEADER_SIZE = Utils.getIntByteSize() * 2 + 3; //pageID + recordCount + deleted(1) + dirty(1) + full(1)
+    public static final int HEADER_SIZE = Utils.getIntByteSize() * 3 + 3; //pageID + recordCount + deleteMaskSize + deleted(1) + dirty(1) + full(1)
 
     ArrayList<Record> records;
 
@@ -42,13 +41,17 @@ public class Page {
         this.table = table;
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
-        deletedMask = new BitSet();
+        deletedMask = new BitSet(maxRecordCount);
         pageBuffer = ByteBuffer.allocate(PAGE_SIZE);
         initRecordPageBuffer();
     }
 
     public static int calcMaxRecordCount(int recordSize) {
-        return (PAGE_SIZE - HEADER_SIZE) / recordSize;
+        final int bitsInByte = 8;
+        int pureRecordCount = (PAGE_SIZE - HEADER_SIZE) / recordSize;
+        int deleteMaskSize = (pureRecordCount / (Utils.getLongByteSize() * bitsInByte) + 1) * 3 * Utils.getLongByteSize() * bitsInByte; // BitSet is a long array[]
+        int resultRecordCount = (PAGE_SIZE - HEADER_SIZE - deleteMaskSize) / recordSize;
+        return resultRecordCount;
     }
 
     public Record getRecord(int num) {
@@ -84,14 +87,11 @@ public class Page {
         updateRecordPageBuffer();
     }
 
-    public void updateRecordPageBuffer() {
-        // Updating default meta-information
-        final int INT_SIZE = 4;
-        pageBuffer.putInt(0, pageId);
-        pageBuffer.put(INT_SIZE    , (byte) (deleted ? 1 : 0));
-        pageBuffer.put(INT_SIZE + 1, (byte) (dirty   ? 1 : 0));
-        pageBuffer.put(INT_SIZE + 2, (byte) (full    ? 1 : 0));
-        pageBuffer.putInt(INT_SIZE + 3, records.size());
+    public void prepareForIO() {
+        byte[] deleteMaskBytes = Utils.toByteArray(deletedMask);
+        pageBuffer.putInt(deleteMaskBytes.length);
+        pageBuffer.put(deleteMaskBytes);
+        updateRecordPageBuffer();
     }
 
     public void refreshPage() {
@@ -155,6 +155,16 @@ public class Page {
         pageBuffer.put((byte) (dirty   ? 1 : 0));
         pageBuffer.put((byte) (full    ? 1 : 0));
         pageBuffer.putInt(records.size());
+    }
+
+    private void updateRecordPageBuffer() {
+        // Updating default meta-information
+        final int INT_SIZE = Utils.getIntByteSize();
+        pageBuffer.putInt(0, pageId);
+        pageBuffer.put(INT_SIZE,     (byte) (deleted ? 1 : 0));
+        pageBuffer.put(INT_SIZE + 1, (byte) (dirty   ? 1 : 0));
+        pageBuffer.put(INT_SIZE + 2, (byte) (full    ? 1 : 0));
+        pageBuffer.putInt(INT_SIZE + 3, records.size());
     }
 
 }

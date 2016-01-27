@@ -2,9 +2,9 @@ package common.utils;
 
 import common.Type;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 
 /**
@@ -18,6 +18,10 @@ public class Utils {
     public static int getIntByteSize(){
         //can be used to determine x86 or x64: System.getProperty("os.arch");
         return 4;
+    }
+
+    public static int getLongByteSize(){
+        return 8;
     }
 
     public static int getDoubleByteSize(){
@@ -59,5 +63,34 @@ public class Utils {
                 return file.readInt();
         }
         return null;
+    }
+
+    // convert from BitSet to byte array
+    public static byte[] toByteArray(BitSet bitSet) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(bitSet.size());
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(bitSet);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return baos.toByteArray();
+    }
+
+    // convert from byte array to BitSet
+    public static BitSet toBitSet(byte[] byteArr) {
+        BitSet bitSet = null; // the new BitSet
+        ByteArrayInputStream bais = new ByteArrayInputStream(byteArr);
+        try {
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            bitSet = (BitSet)ois.readObject();
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return bitSet;
     }
 }

@@ -73,7 +73,12 @@ public class TableManager implements ITableManager, AutoCloseable {
 
         Table table = tablesMap.get(tableName);
         // Uses conditions for complicated selects all over several tables
-        ICursor cursor = bufferManager.getCursor(table, conditions);
+        ICursor cursor = null;
+        try {
+            cursor = bufferManager.getCursor(table, conditions);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
         return cursor;
     }
 
@@ -118,23 +123,16 @@ public class TableManager implements ITableManager, AutoCloseable {
         }
     }
 
-//    ICursor createCursor(List<Page> pages, Conditions conditions)
-//    {
-//        Map<String, Table> tables = new HashMap<>();
-//        for (Page page : pages)
-//        {
-//            Table table = page.getTable();
-//            if (!tables.containsKey(table.getName())){
-//                tables.put(table.getName(), table);
-//            }
-//        }
-//
-//        ICursor cursor = null;
-//
-//        if (tables.getSize() == 1)
-//            cursor = new SimpleCursor(pages, pages.get(0).getTable());
-//
-//        return cursor;
-//    }
-
+    @Override
+    public int delete(String tableName, Conditions conditions) {
+        if (!tablesMap.containsKey(tableName))
+            throw new IllegalArgumentException(String.format("Table %s not found", tableName));
+        Table table = tablesMap.get(tableName);
+        try {
+            return bufferManager.delete(table, conditions);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

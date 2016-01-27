@@ -11,6 +11,7 @@ import javax.naming.OperationNotSupportedException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -24,6 +25,8 @@ public class Page {
     public boolean full;
     public Table table;
     public ByteBuffer pageBuffer;
+
+    public BitSet deletedMask;
 
     // KBytes
     public static final int PAGE_SIZE = 4 * 1024;
@@ -39,6 +42,7 @@ public class Page {
         this.table = table;
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
+        deletedMask = new BitSet();
         pageBuffer = ByteBuffer.allocate(PAGE_SIZE);
         initRecordPageBuffer();
     }
@@ -106,6 +110,17 @@ public class Page {
 
     public IndexType getIndexType() throws OperationNotSupportedException {
         throw new OperationNotSupportedException();
+    }
+
+    public int deleteRecords(Conditions conditions) {
+        int removedCount = 0;
+        for (int i = 0; i < records.size(); i++) {
+            if (conditions.check(records.get(i))) {
+                deletedMask.set(i);
+                removedCount++;
+            }
+        }
+        return removedCount;
     }
 
     private void addRecordToPageBuffer(Record record) {

@@ -38,6 +38,8 @@ public class TreeIndex extends AbstractIndex {
             Record record = cursor.getRecord();
             int recordOffset = loadEngine.calcRecordOffset(cursor.getPageNum(), cursor.getRecordNum());
             bTree.put((Comparable<Object>) record.getColumnValue(columnIndex), recordOffset);
+            if (c > 312 && bTree.get((Comparable<Object>) (Object) 3120) == null)
+                break;
             System.out.println(c++);
         }
     }

@@ -7,5 +7,7 @@ public enum StatementType {
     NONE,
     CREATE,
     SELECT,
-    INSERT
+    INSERT,
+    DELETE,
+    UPDATE
 }

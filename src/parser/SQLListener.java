@@ -196,4 +196,19 @@ public class SQLListener extends SQLiteBaseListener {
         }
     }
 
+    @Override
+    public void exitDelete_stmt(SQLiteParser.Delete_stmtContext ctx) {
+        statementType = StatementType.DELETE;
+        try {
+            Table table = tableManager.getTable(ctx.qualified_table_name().getText());
+            params.put("table_name", table.getName());
+            Conditions conditions = getCondition(table, ctx.expr());
+            params.put("conditions", conditions);
+        } catch (QueryException e) {
+            statementType = StatementType.NONE;
+            error_message = e.getMessage();
+        }
+
+    }
+
 }

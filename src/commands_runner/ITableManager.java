@@ -14,6 +14,8 @@ public interface ITableManager {
     boolean createTable(String tableName, List<Column> columns);
     void insert(String tableName, Conditions assignments);
     ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
+    int delete(String tableName, Conditions conditions);
+
     void loadTables();
 
     void createIndex(String tableName, Column column);

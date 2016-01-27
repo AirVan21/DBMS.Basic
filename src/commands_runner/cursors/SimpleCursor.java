@@ -33,18 +33,20 @@ public class SimpleCursor implements ICursor {
 
     @Override
     public boolean next() {
-        recordNum += 1;
-        if (recordNum >= maxRecordsCount) {
-            recordNum = 0;
-            if (loadEngine.sizeInPages() <= pageNum && recordNum >= currentPage.getRecordsCount())
+        do {
+            recordNum += 1;
+            if (recordNum >= maxRecordsCount) {
+                recordNum = 0;
+                if (loadEngine.sizeInPages() <= pageNum && recordNum >= currentPage.getRecordsCount())
+                    return false;
+                pageNum += 1;
+                loadEngine.switchToTable(table);
+                currentPage = loadEngine.getPageFromBuffer(pageNum);
+            }
+            if (currentPage == null)
                 return false;
-            pageNum += 1;
-            loadEngine.switchToTable(table);
-            currentPage = loadEngine.getPageFromBuffer(pageNum);
-        }
-        if (currentPage == null)
-            return false;
-        currentRecord = currentPage.getRecord(recordNum);
+            currentRecord = currentPage.getRecord(recordNum);
+        } while (currentPage.deletedMask.get(recordNum));
         return currentRecord != null;
     }
 

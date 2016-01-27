@@ -27,7 +27,7 @@ public class indexTest {
 
     @Before
     public void beforeTest() {
-        deleteDirectory(new File(dbFolder));
+        TestUtils.deleteDirectory(new File(dbFolder));
         Integer bufferPoolSize = 16;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
@@ -72,21 +72,4 @@ public class indexTest {
         }
     }
 
-    private static boolean deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-
-            if (files == null)
-                return true;
-
-            for (File file : files) {
-                if (file.isDirectory())
-                    deleteDirectory(file);
-                else
-                    file.delete();
-            }
-        }
-
-        return directory.delete();
-    }
 }

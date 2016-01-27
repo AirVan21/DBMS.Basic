@@ -7,6 +7,7 @@ import common.exceptions.QueryException;
 import common.table_classes.Table;
 import parser.SQLParser;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -61,5 +62,34 @@ public class TestUtils {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    public static Statement createStatement(SQLParser sqlParser, String query)
+    {
+        Statement statement = null;
+        try {
+            statement = sqlParser.parse(query);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
+
+        return statement;
+    }
+
+    public static boolean deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+
+            if (files == null)
+                return true;
+
+            for (File file : files) {
+                if (file.isDirectory())
+                    deleteDirectory(file);
+                else
+                    file.delete();
+            }
+        }
+        return directory.delete();
     }
 }

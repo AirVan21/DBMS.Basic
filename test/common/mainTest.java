@@ -24,7 +24,7 @@ public class mainTest {
 
     @Before
     public void beforeTest() {
-        deleteDirectory(new File(dbFolder));
+        TestUtils.deleteDirectory(new File(dbFolder));
         Integer bufferPoolSize = 16;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
@@ -145,8 +145,8 @@ public class mainTest {
         SQLParser sqlParser = new SQLParser(manager);
         String queryFirst = "Insert into db." + tableName + "(name, age, salary) values (\"Petr\", 22, 23504.5)";
         String querySecond = "Insert into db." + tableName + "(name, age, salary) values (\"Ann\", 35, 47412.0)";
-        Statement statementFirst = createStatement(sqlParser, queryFirst);
-        Statement statementSecond = createStatement(sqlParser, querySecond);
+        Statement statementFirst = TestUtils.createStatement(sqlParser, queryFirst);
+        Statement statementSecond = TestUtils.createStatement(sqlParser, querySecond);
         // ((Conditions) statementFirst.getParam("conditions")).getValues().get(2) = salary + 5 * i;
 
         for (int i = 0; i < TEST_SIZE; ++i) {
@@ -260,34 +260,5 @@ public class mainTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static boolean deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-
-            if (files == null)
-                return true;
-
-            for (File file : files) {
-                if (file.isDirectory())
-                    deleteDirectory(file);
-                else
-                    file.delete();
-            }
-        }
-        return directory.delete();
-    }
-
-    private Statement createStatement(SQLParser sqlParser, String query)
-    {
-        Statement statement = null;
-        try {
-            statement = sqlParser.parse(query);
-        } catch (QueryException e) {
-            e.printStackTrace();
-        }
-
-        return statement;
     }
 }

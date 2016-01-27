@@ -15,21 +15,24 @@ public class ProjCursor implements ICursor {
 
     ICursor baseCursor;
     List<Integer> columnIndexes;
+    List<ColumnSelect> selectionColumns;
     Record currentRecord;
 
-    ProjCursor(ICursor baseCursor, List<ColumnSelect> selectionColumns) {
+    public ProjCursor(ICursor baseCursor, List<ColumnSelect> selectionColumns) {
         this.baseCursor = baseCursor;
         this.columnIndexes = new ArrayList<>();
+        this.selectionColumns = selectionColumns;
         currentRecord = null;
-        for (ColumnSelect column : selectionColumns) {
-            //columnIndexes.add(table.getColumnIndex(column));
+        for (ColumnSelect columnSelect : selectionColumns) {
+            columnIndexes.add(columnSelect.getTable().getColumnIndex(columnSelect.getСolumn()));
         }
     }
 
     @Override
     public boolean next() {
-        while (baseCursor.next()) {
-//            currentRecord = new Record(columnIndexes);
+        if (baseCursor.next()) {
+            currentRecord = new Record(baseCursor.getRecord().getColumnsValues(columnIndexes));
+            return true;
         }
         return false;
     }
@@ -42,5 +45,10 @@ public class ProjCursor implements ICursor {
     @Override
     public void reset() {
         baseCursor.reset();
+    }
+
+    @Override
+    public List<ColumnSelect> getMetaInfo() {
+        return selectionColumns;
     }
 }

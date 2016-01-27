@@ -1,9 +1,6 @@
 package buffer_manager;
 
-import commands_runner.cursors.ICursor;
-import commands_runner.cursors.IndexCursor;
-import commands_runner.cursors.WhereCursor;
-import commands_runner.cursors.SimpleCursor;
+import commands_runner.cursors.*;
 import commands_runner.indexes.AbstractIndex;
 import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.IndexType;
@@ -109,15 +106,16 @@ public class HeapBufferManager extends AbstractBufferManager {
             AbstractIndex index = table.getIndex();
             ICursor cursor;
             if (index != null) {
-                cursor = new IndexCursor(index, conditions);
+                cursor = new IndexCursor(table, index, conditions);
             }
             else {
                 cursor = new SimpleCursor(loadEngine, table);
             }
             if (conditions != null)
             {
-                return new WhereCursor(cursor, conditions, table);
+                cursor = new WhereCursor(cursor, conditions, table);
             }
+            cursor = new ProjCursor(cursor, selectColumns);
             return cursor;
         } else {
             throw new QueryException("Trying select from table which do not exist!");

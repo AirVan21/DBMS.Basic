@@ -1,6 +1,7 @@
 package commands_runner.cursors;
 
 import common.Column;
+import common.ColumnSelect;
 import common.conditions.Conditions;
 import common.table_classes.Record;
 import org.antlr.v4.runtime.misc.Pair;
@@ -18,13 +19,16 @@ public class JoinCursor implements ICursor {
     List<Pair<Integer, Integer>> conditionsOn;
     Record currentRecord;
 
+    List<ColumnSelect> columnsSelect;
+
     public JoinCursor(ICursor cursorFirst, ICursor cursorSecond, List<Pair<Integer, Integer>> conditionsOn)
     {
         this.conditionsOn = conditionsOn;
         this.cursorFirst = cursorFirst;
         this.cursorSecond = cursorSecond;
         this.currentRecord = null;
-
+        columnsSelect = new ArrayList<>(cursorFirst.getMetaInfo());
+        columnsSelect.addAll(cursorSecond.getMetaInfo());
     }
 
     @Override
@@ -55,5 +59,10 @@ public class JoinCursor implements ICursor {
     public void reset() {
         cursorFirst.reset();
         cursorSecond.reset();
+    }
+
+    @Override
+    public List<ColumnSelect> getMetaInfo() {
+        return columnsSelect;
     }
 }

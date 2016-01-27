@@ -37,6 +37,14 @@ public class Record {
         return values.get(columnIndex);
     }
 
+    public List<Object> getColumnsValues(List<Integer> columnsIndexes) {
+        List<Object> result = new ArrayList<>();
+        for (Integer columnIndex : columnsIndexes) {
+            result.add(values.get(columnIndex));
+        }
+        return result;
+    }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();

@@ -9,6 +9,9 @@ import common.conditions.Conditions;
 import common.table_classes.Record;
 import common.table_classes.Table;
 
+import java.io.*;
+import java.nio.CharBuffer;
+
 
 /**
  * Created by semionn on 30.10.15.
@@ -38,9 +41,42 @@ public class TreeIndex extends AbstractIndex {
             Record record = cursor.getRecord();
             int recordOffset = loadEngine.calcRecordOffset(cursor.getPageNum(), cursor.getRecordNum());
             bTree.put((Comparable<Object>) record.getColumnValue(columnIndex), recordOffset);
-            if (c > 312 && bTree.get((Comparable<Object>) (Object) 3120) == null)
-                break;
+//            if (c > 190 && bTree.get((Comparable<Object>) (Object) 1850) == null)
+//                break;
             System.out.println(c++);
+
+//            try {
+//                File file = new File("dataTree/index_"+c+".txt");
+//                // creates the file
+//                file.createNewFile();
+//                // creates a FileWriter Object
+//                FileWriter writer = new FileWriter(file);
+//                // Writes the content to the file
+//                writer.write(bTree.toString());
+//                writer.flush();
+//                writer.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            bTree.toString();
+//            if (c > 2)
+//            try {
+//                File file = new File("dataTree/index_"+c+".txt");
+//                //Creates a FileReader Object
+//                try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+//                    String fileLine, currLine;
+//                    String[] bTreeText = bTree.toString().split("\n");
+//                    int i = 0;
+//                    while (!(fileLine = br.readLine()).equals("")) {
+//                        currLine = bTreeText[i++];
+//                        if (!currLine.equals(fileLine))
+//                            break;
+//
+//                    }
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 

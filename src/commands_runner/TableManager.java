@@ -75,7 +75,7 @@ public class TableManager implements ITableManager, AutoCloseable {
         // Uses conditions for complicated selects all over several tables
         ICursor cursor = null;
         try {
-            cursor = bufferManager.getCursor(table, conditions);
+            cursor = bufferManager.getCursor(table, columns, conditions);
         } catch (QueryException e) {
             e.printStackTrace();
         }

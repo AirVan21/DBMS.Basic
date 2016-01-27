@@ -2,11 +2,12 @@ package buffer_manager;
 
 import commands_runner.cursors.ICursor;
 import commands_runner.cursors.IndexCursor;
-import commands_runner.cursors.ProjectCursor;
+import commands_runner.cursors.WhereCursor;
 import commands_runner.cursors.SimpleCursor;
 import commands_runner.indexes.AbstractIndex;
 import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.IndexType;
+import common.ColumnSelect;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Page;
@@ -103,7 +104,7 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public ICursor getCursor(Table table, Conditions conditions) throws QueryException  {
+    public ICursor getCursor(Table table, List<ColumnSelect> selectColumns, Conditions conditions) throws QueryException  {
         if (sysTable.isExist(table.getName())) {
             AbstractIndex index = table.getIndex();
             ICursor cursor;
@@ -115,7 +116,7 @@ public class HeapBufferManager extends AbstractBufferManager {
             }
             if (conditions != null)
             {
-                return new ProjectCursor(cursor, conditions, table);
+                return new WhereCursor(cursor, conditions, table);
             }
             return cursor;
         } else {

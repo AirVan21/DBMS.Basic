@@ -196,37 +196,6 @@ public class mainTest {
         manager.insert(tableName, new Conditions());
     }
 
-    @Test()
-    public void createIndexTest() {
-        String tableName = "testTable";
-        Column ageColumn = new Column("Age", new Type(BaseType.INT));
-        Column nameColumn = new Column("Name", Type.createType("varchar", 20));
-        List<Column> columns = new ArrayList<>();
-        columns.add(ageColumn);
-        columns.add(nameColumn);
-        assertTrue(manager.createTable(tableName, columns));
-        Column column = manager.getTable(tableName).getColumns().get(0);
-        assertNotNull(column);
-
-        SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 4500;
-        for (int i = 0; i < insertCount; i++) {
-            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
-            runInsert(sqlParser, query);
-        }
-
-        manager.createIndex(tableName, column);
-
-        for (int i = 0; i < insertCount / 100; i++) {
-            String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
-                    "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
-            int count = runSelect(sqlParser, query);
-            if (count != 2)
-                break;
-            assertEquals(2, count);
-        }
-    }
-
 //    @Test
 //    public void deleteTest() {
 //        String tableName = "testTable";

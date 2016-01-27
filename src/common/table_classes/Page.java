@@ -25,7 +25,6 @@ public class Page {
     public boolean full;
     public Table table;
     public ByteBuffer pageBuffer;
-
     public BitSet deletedMask;
 
     // KBytes
@@ -48,7 +47,8 @@ public class Page {
     }
 
     public static int calcMaxRecordCount(int recordSize) {
-        return (PAGE_SIZE - HEADER_SIZE) / recordSize;
+        int pureRecordCount = (PAGE_SIZE - HEADER_SIZE) / recordSize;
+        return pureRecordCount;
     }
 
     public Record getRecord(int num) {
@@ -86,9 +86,9 @@ public class Page {
 
     public void updateRecordPageBuffer() {
         // Updating default meta-information
-        final int INT_SIZE = 4;
+        final int INT_SIZE = Utils.getIntByteSize();
         pageBuffer.putInt(0, pageId);
-        pageBuffer.put(INT_SIZE    , (byte) (deleted ? 1 : 0));
+        pageBuffer.put(INT_SIZE,     (byte) (deleted ? 1 : 0));
         pageBuffer.put(INT_SIZE + 1, (byte) (dirty   ? 1 : 0));
         pageBuffer.put(INT_SIZE + 2, (byte) (full    ? 1 : 0));
         pageBuffer.putInt(INT_SIZE + 3, records.size());

@@ -42,6 +42,7 @@ public class Page {
         this.table = table;
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
+        deletedMask = new BitSet();
         pageBuffer = ByteBuffer.allocate(PAGE_SIZE);
         initRecordPageBuffer();
     }
@@ -109,6 +110,17 @@ public class Page {
 
     public IndexType getIndexType() throws OperationNotSupportedException {
         throw new OperationNotSupportedException();
+    }
+
+    public int deleteRecords(Conditions conditions) {
+        int removedCount = 0;
+        for (int i = 0; i < records.size(); i++) {
+            if (conditions.check(records.get(i))) {
+                deletedMask.set(i);
+                removedCount++;
+            }
+        }
+        return removedCount;
     }
 
     private void addRecordToPageBuffer(Record record) {

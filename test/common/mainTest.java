@@ -208,23 +208,18 @@ public class mainTest {
 //        Column column = manager.getTable(tableName).getColumns().get(0);
 //        assertNotNull(column);
 //
-//
-//        final int default_age = 25;
 //        SQLParser sqlParser = new SQLParser(manager);
-//        String queryInsert = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + default_age + ")";
-//        Statement statement = createStatement(sqlParser, queryInsert);
-//
-//        final int insertCount = 300;
+//        final int insertCount = 4500;
 //        for (int i = 0; i < insertCount; i++) {
-//            manager.insert(statement.getStringParam("table_name"),
-//                    (Conditions) statement.getParam("conditions"));
+//            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
+//            runInsert(sqlParser, query);
 //        }
 //
 //        manager.createIndex(tableName, column);
 //
 //        for (int i = 0; i < insertCount / 100; i++) {
-//            String query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
-//                    "where age = %2$d", tableName, default_age);
+//            String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
+//                    "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
 //            int count = runSelect(sqlParser, query);
 //            assertEquals(2, count);
 //        }

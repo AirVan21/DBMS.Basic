@@ -48,15 +48,15 @@ public class indexTest {
         final int insertCount = 4500;
         for (int i = 0; i < insertCount; i++) {
             String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
-            runInsert(sqlParser, query);
+            TestUtils.runInsert(manager, sqlParser, query);
         }
 
         manager.createIndex(tableName, column);
 
-        for (int i = 0; i < insertCount / 100; i++) {
+        for (int i = 0;  i < insertCount / 100; i++) {
             String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
                     "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
-            int count = runSelect(sqlParser, query);
+            int count = TestUtils.runSelect(manager, sqlParser, query, null);
             if (count != 2)
                 break;
             assertEquals(2, count);
@@ -88,39 +88,5 @@ public class indexTest {
         }
 
         return directory.delete();
-    }
-
-    private void runInsert(SQLParser sqlParser, String query) {
-        try {
-            Statement statement = sqlParser.parse(query);
-            manager.insert(statement.getStringParam("table_name"),
-                    (Conditions) statement.getParam("conditions"));
-        } catch (QueryException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private int runSelect(SQLParser sqlParser, String query) {
-        try {
-            Statement statement = sqlParser.parse(query);
-            ICursor cursor = manager.select(statement.getStringParam("table_name"),
-                    (List<ColumnSelect>) statement.getParam("columns"),
-                    (Conditions) statement.getParam("conditions"));
-
-            int counter = 0;
-
-            System.out.println("=== SELECT ===");
-            while (cursor.next()) {
-                counter++;
-                if (counter % 100 == 0) {
-                    System.out.println(counter);
-                }
-            }
-
-            return counter;
-        } catch (QueryException e) {
-            e.printStackTrace();
-            return -1;
-        }
     }
 }

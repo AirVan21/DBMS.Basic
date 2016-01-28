@@ -60,16 +60,6 @@ public class Page {
         return records.get(num);
     }
 
-    public List<Record> getRecords(Conditions conditions) {
-        List<Record> result = new ArrayList<>();
-        for (Record record : records) {
-            if (conditions.check(record)) {
-                result.add(record);
-            }
-        }
-        return result;
-    }
-
     public List<Record> getAllRecords() {
         return records;
     }
@@ -115,7 +105,7 @@ public class Page {
     public int deleteRecords(Conditions conditions) {
         int removedCount = 0;
         for (int i = 0; i < records.size(); i++) {
-            if (conditions.check(records.get(i))) {
+            if (conditions.check(records.get(i), null)) {
                 deletedMask.set(i);
                 removedCount++;
             }

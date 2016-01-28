@@ -1,8 +1,11 @@
 package common.conditions;
 
 import common.Column;
+import common.ColumnSelect;
 import common.table_classes.Record;
 import common.table_classes.Table;
+
+import java.util.List;
 
 /**
  * Created by semionn on 31.10.15.
@@ -36,11 +39,21 @@ public class Condition {
         return comparisonType;
     }
 
-    public boolean check(Record record)
+    public boolean check(Record record, List<ColumnSelect> columnsSelect)
     {
-        int columnIndex = table.getColumnIndex(column);
-        Comparable<Object> recValue = (Comparable<Object>)record.getColumnValue(columnIndex);
-
+        Comparable<Object> recValue = null;
+        if (columnsSelect == null) {
+            int columnIndex = table.getColumnIndex(column);
+            recValue = (Comparable<Object>) record.getColumnValue(columnIndex);
+        } else {
+            for (int i = 0; i < columnsSelect.size(); i++) {
+                if (columnsSelect.get(i).getTable() == table &&
+                        columnsSelect.get(i).getСolumn() == column) {
+                    recValue = (Comparable<Object>) record.getColumnValue(i);
+                    break;
+                }
+            }
+        }
         switch (comparisonType) {
             case LESS:
                 return recValue.compareTo(value) < 0;

@@ -2,6 +2,7 @@ package common.conditions;
 
 
 import common.Column;
+import common.ColumnSelect;
 import common.NullObject;
 import common.table_classes.Record;
 import common.table_classes.Table;
@@ -57,11 +58,11 @@ public class Conditions {
         });
     }
 
-    public boolean check(Record record)
+    public boolean check(Record record, List<ColumnSelect> columnsSelect)
     {
         for (Condition condition : values)
         {
-            if (!condition.check(record))
+            if (!condition.check(record, columnsSelect))
                 return false;
         }
         return true;

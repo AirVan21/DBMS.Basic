@@ -31,7 +31,7 @@ public class TestUtils {
                 printFrequency = 100;
 
             Statement statement = sqlParser.parse(query);
-            ICursor cursor = manager.select(statement.getStringParam("table_name"),
+            ICursor cursor = manager.select((FromClause) statement.getParam("from"),
                     (List<ColumnSelect>) statement.getParam("columns"),
                     (Conditions) statement.getParam("conditions"));
 

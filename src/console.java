@@ -54,7 +54,7 @@ public class console {
                             (List<Column>) statement.getParam("columns"));
                     break;
                 case SELECT:
-                    ICursor cursor = tableManager.select(statement.getStringParam("table_name"),
+                    ICursor cursor = tableManager.select((FromClause) statement.getParam("from"),
                             (List<ColumnSelect>) statement.getParam("columns"),
                             (Conditions) statement.getParam("conditions"));
                     int counter = 0;

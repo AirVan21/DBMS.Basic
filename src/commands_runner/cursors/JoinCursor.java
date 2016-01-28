@@ -33,7 +33,10 @@ public class JoinCursor implements ICursor {
 
     @Override
     public boolean next() {
-        while (cursorFirst.next()) {
+        if (currentRecord == null)
+            cursorFirst.next();
+
+        while (true) {
             Record firstRec = cursorFirst.getRecord();
             while (cursorSecond.next()) {
                 Record secondRec = cursorSecond.getRecord();
@@ -46,6 +49,8 @@ public class JoinCursor implements ICursor {
                     }
             }
             cursorSecond.reset();
+            if (!cursorFirst.next())
+                break;
         }
         return false;
     }

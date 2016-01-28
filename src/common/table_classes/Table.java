@@ -49,6 +49,13 @@ public class Table {
         return -1;
     }
 
+    public int getColumnIndex(final String columnName) {
+        for (int i = 0; i < columns.size(); i++)
+            if (columns.get(i).getName().equals(columnName.toUpperCase()))
+                return i;
+        return -1;
+    }
+
     public void setRecordSize(int recordSize) {
         this.recordSize = recordSize;
     }

@@ -1,6 +1,6 @@
 package common.oracles;
 
-import common.Join;
+import common.FromClause;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
@@ -8,7 +8,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  */
 public class Oracle {
 
-    Estimation estimateJoin(Join join) {
+    Estimation estimateJoin(FromClause fromClause) {
         throw new NotImplementedException();
     }
 }

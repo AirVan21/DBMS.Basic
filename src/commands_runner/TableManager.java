@@ -8,6 +8,7 @@ import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.TreeIndex;
 import common.Column;
 import common.ColumnSelect;
+import common.FromClause;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Record;
@@ -67,15 +68,15 @@ public class TableManager implements ITableManager, AutoCloseable {
     }
 
     @Override
-    public ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions) {
-        if (!tablesMap.containsKey(tableName))
-            throw new IllegalArgumentException(String.format("Table %s not found", tableName));
+    public ICursor select(FromClause fromClause, List<ColumnSelect> columns, Conditions conditions) {
+//        if (!tablesMap.containsKey(fromClause))
+//            throw new IllegalArgumentException(String.format("Table %s not found", fromClause));
 
-        Table table = tablesMap.get(tableName);
+//        Table table = tablesMap.get(fromClause);
         // Uses conditions for complicated selects all over several tables
         ICursor cursor = null;
         try {
-            cursor = bufferManager.getCursor(table, columns, conditions);
+            cursor = bufferManager.getCursor(fromClause, conditions, true);
         } catch (QueryException e) {
             e.printStackTrace();
         }

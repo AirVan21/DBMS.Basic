@@ -2,6 +2,7 @@ package commands_runner;
 import commands_runner.cursors.ICursor;
 import common.Column;
 import common.ColumnSelect;
+import common.FromClause;
 import common.conditions.Conditions;
 import common.table_classes.Table;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public interface ITableManager {
     boolean createTable(String tableName, List<Column> columns);
     void insert(String tableName, Conditions assignments);
-    ICursor select(String tableName, List<ColumnSelect> columns, Conditions conditions);
+    ICursor select(FromClause fromClause, List<ColumnSelect> columns, Conditions conditions);
     int delete(String tableName, Conditions conditions);
 
     void loadTables();

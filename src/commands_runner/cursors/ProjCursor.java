@@ -1,9 +1,7 @@
 package commands_runner.cursors;
 
-import common.Column;
 import common.ColumnSelect;
 import common.table_classes.Record;
-import common.table_classes.Table;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -4,7 +4,9 @@ import commands_runner.cursors.*;
 import commands_runner.indexes.AbstractIndex;
 import commands_runner.indexes.btree.BTreeSerializer;
 import commands_runner.indexes.btree.IndexType;
+import common.Column;
 import common.ColumnSelect;
+import common.FromClause;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Page;
@@ -16,6 +18,7 @@ import common.xml.XMLBuilder;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,25 +104,48 @@ public class HeapBufferManager extends AbstractBufferManager {
     }
 
     @Override
-    public ICursor getCursor(Table table, List<ColumnSelect> selectColumns, Conditions conditions) throws QueryException  {
-        if (sysTable.isExist(table.getName())) {
-            AbstractIndex index = table.getIndex();
-            ICursor cursor;
-            if (index != null) {
-                cursor = new IndexCursor(table, index, conditions);
+    public ICursor getCursor(FromClause fromClause, Conditions conditions, Boolean makeProjection) throws QueryException {
+        ICursor cursor;
+        if (makeProjection == null)
+            makeProjection = true;
+        if (fromClause.getTable() != null) {
+            Table table = fromClause.getTable();
+            if (sysTable.isExist(table.getName())) {
+                AbstractIndex index = table.getIndex();
+                if (index != null) {
+                    cursor = new IndexCursor(table, index, conditions);
+                } else {
+                    cursor = new SimpleCursor(loadEngine, table);
+                }
+                if (conditions != null) {
+                    cursor = new WhereCursor(cursor, conditions, table);
+                }
+            } else {
+                throw new QueryException("Trying select from table which do not exist!");
             }
-            else {
-                cursor = new SimpleCursor(loadEngine, table);
-            }
-            if (conditions != null)
-            {
-                cursor = new WhereCursor(cursor, conditions, table);
-            }
-            cursor = new ProjCursor(cursor, selectColumns);
-            return cursor;
         } else {
-            throw new QueryException("Trying select from table which do not exist!");
+            ICursor firstCursor = getCursor(fromClause.getFirstFrom(), conditions, false);
+            ICursor secondCursor = getCursor(fromClause.getSecondFrom(), conditions, false);
+            cursor = new JoinCursor(firstCursor, secondCursor, fromClause.getConditionsOn());
         }
+        if (makeProjection) {
+            List<ColumnSelect> selectColumns = new ArrayList<>();
+            fillSelectColumns(fromClause, selectColumns);
+            cursor = new ProjCursor(cursor, selectColumns);
+        }
+        return cursor;
+    }
+
+    private void fillSelectColumns(FromClause fromClause, List<ColumnSelect> selectColumns) {
+        if (fromClause.getTable() != null)
+            for (Column column : fromClause.getColumns()) {
+                selectColumns.add(new ColumnSelect(fromClause.getTable(), column));
+            }
+        else {
+            fillSelectColumns(fromClause.getFirstFrom(), selectColumns);
+            fillSelectColumns(fromClause.getSecondFrom(), selectColumns);
+        }
+
     }
 
     public LoadEngine getLoadEngine() {

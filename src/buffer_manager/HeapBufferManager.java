@@ -117,9 +117,6 @@ public class HeapBufferManager extends AbstractBufferManager {
                 } else {
                     cursor = new SimpleCursor(loadEngine, table);
                 }
-                if (conditions != null) {
-                    cursor = new WhereCursor(cursor, conditions, table);
-                }
             } else {
                 throw new QueryException("Trying select from table which do not exist!");
             }
@@ -129,6 +126,9 @@ public class HeapBufferManager extends AbstractBufferManager {
             cursor = new JoinCursor(firstCursor, secondCursor, fromClause.getConditionsOn());
         }
         if (makeProjection) {
+            if (conditions != null) {
+                cursor = new WhereCursor(cursor, conditions);
+            }
             List<ColumnSelect> selectColumns = new ArrayList<>();
             fillSelectColumns(fromClause, selectColumns);
             cursor = new ProjCursor(cursor, selectColumns);

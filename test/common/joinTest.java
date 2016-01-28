@@ -117,10 +117,10 @@ public class joinTest {
         TestUtils.runInsert(manager, sqlParser, querySecond);
 
         String joinQuery = String.format("SELECT %1$s.name, %1$s.salary, %2$s.parking FROM %1$s " +
-                "JOIN %2$s ON %1$s.id = %2$s.idfst", firstTableName, secondTableName);
+                "JOIN %2$s ON %1$s.id = %2$s.idfst where %1$s.salary = 28000 and %2$s.parking = 8", firstTableName, secondTableName);
 
         int count = TestUtils.runSelect(manager, sqlParser, joinQuery, 1);
-        assertEquals(3, count);
+        assertEquals(1, count);
     }
 
     @After

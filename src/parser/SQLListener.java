@@ -71,13 +71,13 @@ public class SQLListener extends SQLiteBaseListener {
             FromClause fromClause;
             if (ctx.table_or_subquery(0) != null) {
                 fromClause = new FromClause(tableManager.getTable(ctx.table_or_subquery(0).table_name().getText()), null);
-                params.put("from", null);
+                params.put("from", fromClause);
             } else {
                 Table table1 = tableManager.getTable(ctx.join_clause().table_or_subquery(0).table_name().getText());
                 Table table2 = tableManager.getTable(ctx.join_clause().table_or_subquery(1).table_name().getText());
                 fromClause = new FromClause(new FromClause(table1, null), new FromClause(table2, null));
 
-                params.put("from", null);
+                params.put("from", fromClause);
             }
 
             addJoinConditions(fromClause, ctx.join_clause());
@@ -111,16 +111,16 @@ public class SQLListener extends SQLiteBaseListener {
     }
 
     private void addJoinConditions(FromClause fromClause, SQLiteParser.Join_clauseContext joinCtx) {
-        for (SQLiteParser.Join_constraintContext joinConstraintCtx : joinCtx.join_constraint()) {
-            List<SQLiteParser.ExprContext> onCondition = joinConstraintCtx.expr().expr();
-            String firstTableName = onCondition.get(0).table_name().getText();
-            String secondTableName = onCondition.get(1).table_name().getText();
-            String firstColumnName = onCondition.get(0).column_name().getText();
-            String secondColumnName = onCondition.get(1).column_name().getText();
-            if (fromClause.getTable() == null)
-                fromClause.addTableJoinCondition(firstTableName, secondTableName, firstColumnName, secondColumnName);
-        }
-
+        if (joinCtx != null)
+            for (SQLiteParser.Join_constraintContext joinConstraintCtx : joinCtx.join_constraint()) {
+                List<SQLiteParser.ExprContext> onCondition = joinConstraintCtx.expr().expr();
+                String firstTableName = onCondition.get(0).table_name().getText();
+                String secondTableName = onCondition.get(1).table_name().getText();
+                String firstColumnName = onCondition.get(0).column_name().getText();
+                String secondColumnName = onCondition.get(1).column_name().getText();
+                if (fromClause.getTable() == null)
+                    fromClause.addTableJoinCondition(firstTableName, secondTableName, firstColumnName, secondColumnName);
+            }
     }
 
     private boolean fillColumnTable(FromClause fromClause, Table table, String columnName) {

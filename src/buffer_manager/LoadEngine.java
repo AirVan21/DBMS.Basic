@@ -164,7 +164,8 @@ public class LoadEngine {
         if (bufferPos >= 0) {
             Page pageToFill = pageBuffer.get(bufferPos);
             if (pageToFill.isIndex()) {
-                storeIndexPageInFile(bufferPos, table.getIndex().getKeyType());
+                if (pageToFill.dirty)
+                    storeIndexPageInFile(bufferPos, table.getIndex().getKeyType());
                 pageBuffer.set(bufferPos, new Page(table));
                 pageToFill = pageBuffer.get(bufferPos);
             } else if (pageToFill.dirty)
@@ -349,15 +350,14 @@ public class LoadEngine {
     }
 
     public void storeIndexPageInFile(int pageID, int order, Type keyType) {
-        try {
+//        try {
             int bufferPos = findIndexPage(pageID);
             if (bufferPos == -1)
-                bufferPos = loadTreeIndexPageInBuffer(pageID, order, keyType);
-
+                return;
             storeIndexPageInFile(bufferPos, keyType);
-        } catch (ReadPageException e) {
-            e.printStackTrace();
-        }
+//        } catch (ReadPageException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void storeIndexPageInFile(int bufferPos, Type keyType) {

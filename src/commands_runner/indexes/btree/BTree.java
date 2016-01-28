@@ -2,6 +2,7 @@ package commands_runner.indexes.btree;
 
 import buffer_manager.LoadEngine;
 import common.Type;
+import common.exceptions.ReadPageException;
 import common.table_classes.Page;
 import common.table_classes.Table;
 import org.antlr.v4.runtime.misc.Pair;
@@ -208,7 +209,11 @@ class BTree<Key extends Comparable<Object>, Value> {
         N++;
         if (counter > 16) {
             for (int i = 0; i < 16; i++)
-                loadEngine.storeIndexPageInFile(i, order, keyType);
+                try {
+                    loadEngine.loadTreeIndexPageInBuffer(i, order, keyType);
+                } catch (ReadPageException e) {
+                    e.printStackTrace();
+                }
         }
         //save(getRoot(), key, height);
 
@@ -279,7 +284,8 @@ class BTree<Key extends Comparable<Object>, Value> {
     }
 
     public String toString() {
-        return toString(getRoot(), height, "") + "\n";
+        return "";
+//        return toString(getRoot(), height, "") + "\n";
     }
 
     private String toString(Node h, int ht, String indent) {

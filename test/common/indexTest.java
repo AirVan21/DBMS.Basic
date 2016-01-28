@@ -45,7 +45,7 @@ public class indexTest {
         assertNotNull(column);
 
         SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 10_000;
+        final int insertCount = 5_000;
         for (int i = 0; i < insertCount; i++) {
             String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
             TestUtils.runInsert(manager, sqlParser, query);
@@ -54,11 +54,9 @@ public class indexTest {
         manager.createIndex(tableName, column);
 
         for (int i = 0;  i < insertCount / 100; i++) {
-            String query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s " +
+            String query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
                     "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
             int count = TestUtils.runSelect(manager, sqlParser, query, null);
-            if (count != 2)
-                break;
             assertEquals(2, count);
         }
     }

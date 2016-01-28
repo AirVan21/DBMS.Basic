@@ -30,15 +30,13 @@ public class BTreeIterator {
     Comparable<Object> leftBound, rightBound;
     boolean isLeftBoundSet, isRightBoundSet;
 
-    public BTreeIterator(TreeIndex treeIndex, BTreeDB bTree, LoadEngine loadEngine, Conditions conditions) {
+    public BTreeIterator(TreeIndex treeIndex, BTreeDB bTree, LoadEngine loadEngine, Conditions conditions, List<Integer> leafNodes) {
         this.bTree = bTree;
         this.loadEngine = loadEngine;
+        this.leafNodes = leafNodes;
         keyType = treeIndex.getColumn().getType();
 
         setBounds(treeIndex, conditions);
-
-        leafNodes = new ArrayList<>();
-        fillLeafNodes(bTree.getRoot());
         currentRecord = null;
         entryPos = -1;
         nodePos = 0;
@@ -77,19 +75,6 @@ public class BTreeIterator {
             }
         }
     }
-
-    private void fillLeafNodes(Node node) {
-        if (node.currLen > 0)
-            if (node.children[0].nextID == -1)
-                leafNodes.add(node.getID());
-            else
-                for (int i = 0; i < node.currLen; i++) {
-                    Entry entry = node.children[i];
-                    if (entry != null)
-                        fillLeafNodes((Node) loadEngine.getTreeIndexPageFromBuffer(entry.nextID, bTree.getOrder(), keyType));
-                }
-    }
-
     public boolean next() {
         if (isRightBoundSet && (nodePos == lastNodePos && entryPos > lastEntryPos || nodePos > lastNodePos) )
             return false;

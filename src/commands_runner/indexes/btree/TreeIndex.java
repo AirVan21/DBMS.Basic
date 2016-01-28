@@ -11,6 +11,8 @@ import common.table_classes.Table;
 
 import java.io.*;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -23,6 +25,7 @@ public class TreeIndex extends AbstractIndex {
     LoadEngine loadEngine;
     BTreeDB bTree; //key column value and file offset
     BTreeIterator bTreeIterator;
+    List<Integer> leafNodes;
 
     public TreeIndex(LoadEngine loadEngine, Table table, Column column) {
         this(loadEngine, table, column, createBTree(loadEngine, table, column));
@@ -78,6 +81,7 @@ public class TreeIndex extends AbstractIndex {
 //                e.printStackTrace();
 //            }
         }
+        fillLeafNodes(bTree.getRoot());
     }
 
     public TreeIndex(LoadEngine loadEngine, Table table, Column column, BTreeDB bTree) {
@@ -85,12 +89,26 @@ public class TreeIndex extends AbstractIndex {
         this.column = column;
         this.loadEngine = loadEngine;
         this.bTree = bTree;
+        this.leafNodes = new ArrayList<>();
     }
 
     @Override
     public void setIterator(Conditions conditions) {
-        bTreeIterator = new BTreeIterator(this, bTree, loadEngine, conditions);
+        bTreeIterator = new BTreeIterator(this, bTree, loadEngine, conditions, leafNodes);
     }
+
+    private void fillLeafNodes(Node node) {
+        if (node.currLen > 0)
+            if (node.children[0].nextID == -1)
+                leafNodes.add(node.getID());
+            else
+                for (int i = 0; i < node.currLen; i++) {
+                    Entry entry = node.children[i];
+                    if (entry != null)
+                        fillLeafNodes((Node) loadEngine.getTreeIndexPageFromBuffer(entry.nextID, bTree.getOrder(), bTree.getKeyType()));
+                }
+    }
+
 
     @Override
     public boolean next() {

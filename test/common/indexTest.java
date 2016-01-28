@@ -22,43 +22,65 @@ import static org.junit.Assert.assertTrue;
  */
 public class indexTest {
 
+    private final boolean UPDATE_FLAG = false;
     private TableManager manager = null;
     private final String dbFolder = "dataTest//";
 
     @Before
     public void beforeTest() {
-        TestUtils.deleteDirectory(new File(dbFolder));
-        Integer bufferPoolSize = 16;
+        if (UPDATE_FLAG) {
+            TestUtils.deleteDirectory(new File(dbFolder));
+        }
+        Integer bufferPoolSize = 32;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
 
     @Test()
     public void createIndexTest() {
+        final int step = 10;
+        final int insertCount = 50_000; // TEST_SIZE
         String tableName = "testTable";
+
+        // If you want to recreate table & index => set "UPDATE_FLAG = true;"
+        if (UPDATE_FLAG) {
+            createIndexWorkaround(insertCount, tableName);
+        } else {
+            manager.loadTables();
+        }
+
+        final int range = 10;
+        SQLParser sqlParser = new SQLParser(manager);
+        for (int i = 0;  i < insertCount / 100; i++) {
+             String query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
+                    "where age > %2$d and age <= %3$d", tableName, i * 10, i * 10 + range * step);
+            int count = TestUtils.runSelect(manager, sqlParser, query, null);
+            assertEquals(range, count);
+        }
+    }
+
+    public void createIndexWorkaround(int testSize, String nameTable) {
+        String tableName = nameTable;
         Column ageColumn = new Column("Age", new Type(BaseType.INT));
         Column nameColumn = new Column("Name", Type.createType("varchar", 20));
         List<Column> columns = new ArrayList<>();
         columns.add(ageColumn);
         columns.add(nameColumn);
-        assertTrue(manager.createTable(tableName, columns));
+        manager.createTable(tableName, columns);
         Column column = manager.getTable(tableName).getColumns().get(0);
-        assertNotNull(column);
 
         SQLParser sqlParser = new SQLParser(manager);
-        final int insertCount = 5_000;
+        String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", 0)";
+        Statement statement = TestUtils.createStatement(sqlParser, query);
+
+        final int insertCount = testSize; // TEST_SIZE
+        final int step = 10;
+
         for (int i = 0; i < insertCount; i++) {
-            String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", " + i * 10 + ")";
-            TestUtils.runInsert(manager, sqlParser, query);
+            ((Conditions) statement.getParam("conditions")).getValues().get(1).setValue((Comparable<Object>) (Object) (i * step));
+            manager.insert(statement.getStringParam("table_name"), (Conditions) statement.getParam("conditions"));
         }
 
         manager.createIndex(tableName, column);
-
-        for (int i = 0;  i < insertCount / 100; i++) {
-            String query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
-                    "where age > %2$d and age <= %3$d", tableName, i * 100, i * 100 + 20);
-            int count = TestUtils.runSelect(manager, sqlParser, query, null);
-            assertEquals(2, count);
-        }
     }
 
     @After
@@ -69,5 +91,4 @@ public class indexTest {
             e.printStackTrace();
         }
     }
-
 }

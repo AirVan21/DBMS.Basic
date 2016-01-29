@@ -193,7 +193,7 @@ public class mainTest {
 
     @Test
     public void insertCompareTestDifferentRecords() {
-        final int insertCount = 1_000_000; // different records
+        final int insertCount = 10_000; // different records
 
         String tableName = "testTable";
         Column ageColumn = new Column("Age", new Type(BaseType.INT));
@@ -284,7 +284,7 @@ public class mainTest {
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
         count = TestUtils.runSelect(manager, sqlParser, query, 1000);
-        assertEquals(1, count);
+        assertEquals(TEST_SIZE, count);
     }
 
     @After

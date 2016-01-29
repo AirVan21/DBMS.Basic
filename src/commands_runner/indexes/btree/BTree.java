@@ -2,7 +2,6 @@ package commands_runner.indexes.btree;
 
 import buffer_manager.LoadEngine;
 import common.Type;
-import common.exceptions.ReadPageException;
 import common.table_classes.Page;
 import common.table_classes.Table;
 import org.antlr.v4.runtime.misc.Pair;
@@ -207,15 +206,6 @@ class BTree<Key extends Comparable<Object>, Value> {
         if (key == null) throw new NullPointerException("key must not be null");
         Node u = insert(getRoot(), key, val, height);
         N++;
-        if (counter > 32) {
-            for (int i = 0; i < 0; i++)
-                try {
-                    loadEngine.loadTreeIndexPageInBuffer(i, order, keyType);
-                } catch (ReadPageException e) {
-                    e.printStackTrace();
-                }
-        }
-        //save(getRoot(), key, height);
 
         if (u == null) return;
 
@@ -227,20 +217,6 @@ class BTree<Key extends Comparable<Object>, Value> {
         t.children[0] = new Entry(rootNode.children[0].key, null, rootNode.pageId);
         t.children[1] = new Entry(u.children[0].key, null, u.getID());
         height++;
-    }
-
-    private void save(Node h, Key key, int ht) {
-        int j;
-        if (ht != 0) {
-            for (j = 0; j < h.currLen; j++) {
-//                    loadEngine.storeIndexPageInFile(h.children[j].nextID, order, keyType);
-                if ((j + 1 == h.currLen) || less(key, h.children[j + 1].key)) {
-                    save(loadNode(h.children[j++].nextID), key, ht - 1);
-                    return;
-                }
-            }
-        }
-        //loadEngine.storeIndexPageInFile(h.getID(), order, keyType);
     }
 
     private Node insert(Node h, Key key, Value val, int ht) {
@@ -287,7 +263,6 @@ class BTree<Key extends Comparable<Object>, Value> {
         h.currLen = order / 2;
         for (int j = 0; j < order / 2; j++)
             t.children[j] = h.children[order / 2 + j];
-//        loadEngine.storeIndexPageInFile(t.getID(), order, keyType);
         return t;
     }
 

@@ -29,6 +29,8 @@ public interface IBufferManager {
 
     int delete(Table table, Conditions conditions) throws QueryException;
 
+    int update(Table table, Conditions conditions, Conditions assignments) throws QueryException;
+
     //Main
     // |
     //->SELECT/INSERT Conditions

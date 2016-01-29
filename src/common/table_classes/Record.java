@@ -3,6 +3,7 @@ package common.table_classes;
 import common.Column;
 import common.conditions.Condition;
 import common.conditions.Conditions;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
 
@@ -27,6 +28,13 @@ public class Record {
         for (Column column : columns) {
             values.add(((Condition)assignment.getColumnValue(column.getName())).getValue());
         }
+    }
+
+    public void update(List<Pair<Integer, Object>> assignments) {
+        for (Pair<Integer, Object> assignment : assignments) {
+            values.set(assignment.a, assignment.b);
+        }
+
     }
 
     public Record(List<Object> values) {

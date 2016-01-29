@@ -6,6 +6,7 @@ import common.Column;
 import common.Type;
 import common.conditions.Conditions;
 import common.utils.Utils;
+import org.antlr.v4.runtime.misc.Pair;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.*;
@@ -111,6 +112,18 @@ public class Page {
             }
         }
         return removedCount;
+    }
+
+    public int updateRecords(Conditions conditions, List<Pair<Integer, Object>> assignments) {
+        int updatedCount = 0;
+        for (int i = 0; i < records.size(); i++) {
+            if (conditions.check(records.get(i), null)) {
+                records.get(i).update(assignments);
+                updatedCount++;
+            }
+        }
+        return updatedCount;
+
     }
 
     private void addRecordToPageBuffer(Record record) {

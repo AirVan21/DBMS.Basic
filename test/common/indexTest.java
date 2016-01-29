@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class indexTest {
 
-    private final boolean UPDATE_FLAG = false;
+    private final boolean UPDATE_FLAG = true;
     private TableManager manager = null;
     private final String dbFolder = "dataTest//";
 
@@ -38,7 +38,7 @@ public class indexTest {
     @Test()
     public void createIndexTest() {
         final int step = 10;
-        final int insertCount = 100_000; // TEST_SIZE
+        final int insertCount = 50_000; // TEST_SIZE
         String tableName = "testTable";
 
         // If you want to recreate table & index => set "UPDATE_FLAG = true;"
@@ -81,6 +81,42 @@ public class indexTest {
         }
 
         manager.createIndex(tableName, column);
+    }
+
+    @Test()
+    public void deleteIndexTest() {
+        final int step = 10;
+        final int insertCount = 50_000; // TEST_SIZE
+        String tableName = "testTable";
+
+        // If you want to recreate table & index => set "UPDATE_FLAG = true;"
+        if (UPDATE_FLAG) {
+            createIndexWorkaround(insertCount, tableName);
+        } else {
+            return;
+        }
+
+        SQLParser sqlParser = new SQLParser(manager);
+
+        String query = String.format("Select %1$s.age, %1$s.name from db.%1$s where %1$s.age < %2$d", tableName, insertCount * step / 2);
+        int count = TestUtils.runSelect(manager, sqlParser, query, 1000);
+        assertEquals(insertCount / 2, count);
+
+        query = String.format("Delete from %1$s where age <  %2$d", tableName, insertCount * step / 2);
+        int deletedCount = TestUtils.runDelete(manager, sqlParser, query);
+        assertEquals(insertCount / 2, deletedCount);
+
+        query = String.format("Select %1$s.age, %1$s.name from db.%1$s", tableName);
+        count = TestUtils.runSelect(manager, sqlParser, query, 1000);
+        assertEquals(insertCount / 2, count);
+
+        query = String.format("Delete from %1$s where age > %2$d", tableName, insertCount * step / 2);
+        deletedCount = TestUtils.runDelete(manager, sqlParser, query);
+        assertEquals(insertCount / 2 - 1, deletedCount);
+
+        query = String.format("Select %1$s.age, %1$s.name from db.%1$s", tableName);
+        count = TestUtils.runSelect(manager, sqlParser, query, 1000);
+        assertEquals(1, count);
     }
 
     @After

@@ -75,22 +75,33 @@ public class BTreeIterator {
             }
         }
     }
+
     public boolean next() {
         if (isRightBoundSet && (nodePos == lastNodePos && entryPos > lastEntryPos || nodePos > lastNodePos) )
             return false;
-        entryPos++;
-        if (entryPos >= currentNode.currLen) {
-            nodePos++;
-            if (nodePos >= leafNodes.size())
-                return false;
-            int nodeID = leafNodes.get(nodePos);
-            currentNode = (Node) loadEngine.getTreeIndexPageFromBuffer(nodeID, bTree.getOrder(), bTree.getKeyType());
-            entryPos = 0;
+
+        while (entryPos < leafNodes.size()) {
+            entryPos++;
+            if (entryPos >= currentNode.currLen) {
+                nodePos++;
+                if (nodePos >= leafNodes.size())
+                    return false;
+                int nodeID = leafNodes.get(nodePos);
+                currentNode = (Node) loadEngine.getTreeIndexPageFromBuffer(nodeID, bTree.getOrder(), bTree.getKeyType());
+                entryPos = 0;
+            }
+            currentEntry = currentNode.children[entryPos];
+            loadEngine.switchToTable(bTree.getTable());
+
+            if (loadEngine.isRecordDeleted((Integer) currentEntry.val)) {
+                continue;
+            }
+
+            currentRecord = loadEngine.getRecordByOffset((Integer) currentEntry.val);
+            return true;
         }
-        currentEntry = currentNode.children[entryPos];
-        loadEngine.switchToTable(bTree.getTable());
-        currentRecord = loadEngine.getRecordByOffset((Integer) currentEntry.val);
-        return true;
+
+        return false;
     }
 
     public Record getRecord() {

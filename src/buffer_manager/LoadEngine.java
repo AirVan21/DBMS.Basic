@@ -405,6 +405,13 @@ public class LoadEngine {
         }
     }
 
+    public boolean isRecordDeleted(int offset) {
+        int pageID = offset / Page.PAGE_SIZE;
+        int recordPos = (offset % Page.PAGE_SIZE - Page.HEADER_SIZE) / table.getRecordSize();
+        Page page = getPageFromBuffer(pageID);
+        return page.deletedMask.get(recordPos);
+    }
+
     public Record getRecordByOffset(int offset) {
         int pageID = offset / Page.PAGE_SIZE;
         int recordPos = (offset % Page.PAGE_SIZE - Page.HEADER_SIZE) / table.getRecordSize();

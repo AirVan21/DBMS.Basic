@@ -38,7 +38,7 @@ public class indexTest {
     @Test()
     public void createIndexTest() {
         final int step = 10;
-        final int insertCount = 50_000; // TEST_SIZE
+        final int insertCount = 100_000; // TEST_SIZE
         String tableName = "testTable";
 
         // If you want to recreate table & index => set "UPDATE_FLAG = true;"

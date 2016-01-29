@@ -160,8 +160,13 @@ public class HeapBufferManager extends AbstractBufferManager {
             Page currentPage = loadEngine.getPageFromBuffer(pageNum);
             int removedCount = 0;
             while (loadEngine.sizeInPages() >= pageNum) {
-                if (currentPage != null)
-                    removedCount += currentPage.deleteRecords(conditions);
+                if (currentPage != null) {
+                    int removedFromPage = currentPage.deleteRecords(conditions);
+                    if (removedFromPage > 0) {
+                        removedCount += removedFromPage;
+                        currentPage.dirty = true;
+                    }
+                }
                 pageNum += 1;
                 loadEngine.switchToTable(table);
                 currentPage = loadEngine.getPageFromBuffer(pageNum);

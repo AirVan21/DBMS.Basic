@@ -23,7 +23,7 @@ public class mainTest {
     @Before
     public void beforeTest() {
         TestUtils.deleteDirectory(new File(dbFolder));
-        Integer bufferPoolSize = 16;
+        Integer bufferPoolSize = 32;
         manager = new TableManager(bufferPoolSize, dbFolder);
     }
 
@@ -250,6 +250,7 @@ public class mainTest {
         query = "Delete from " + tableName + " where age = 21 and salary < 25000";
         int deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(0, deletedCount);
+
         query = "Delete from " + tableName + " where age = 22 and salary < 25000";
         deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(1, deletedCount);
@@ -277,6 +278,10 @@ public class mainTest {
         query = String.format("Delete from %1$s where age = 22 and salary < %2$f", tableName, default_salary + TEST_SIZE / 2);
         int deletedCount = TestUtils.runDelete(manager, sqlParser, query);
         assertEquals(TEST_SIZE / 2, deletedCount);
+
+        query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22 and %1$s.salary >= %2$f", tableName, default_salary + TEST_SIZE / 2);
+        count = TestUtils.runSelect(manager, sqlParser, query, 1000);
+        assertEquals(TEST_SIZE / 2, count);
 
         query = String.format("Delete from %1$s where age = 22 and salary > %2$f", tableName, default_salary + TEST_SIZE / 2);
         deletedCount = TestUtils.runDelete(manager, sqlParser, query);

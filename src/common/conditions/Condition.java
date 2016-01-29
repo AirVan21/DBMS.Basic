@@ -31,6 +31,10 @@ public class Condition {
         return column;
     }
 
+    public void setValue(Comparable<Object> value) {
+        this.value = value;
+    }
+
     public Comparable<Object> getValue() {
         return value;
     }

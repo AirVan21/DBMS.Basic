@@ -92,7 +92,7 @@ class BTree<Key extends Comparable<Object>, Value> {
         if (rootID != -1)
             this.rootID = rootID;
         else {
-            Node node = createNode(rootID, order, -1);
+            Node node = createNode(0, order, -1);
             this.rootID = node.getID();
         }
     }
@@ -207,8 +207,8 @@ class BTree<Key extends Comparable<Object>, Value> {
         if (key == null) throw new NullPointerException("key must not be null");
         Node u = insert(getRoot(), key, val, height);
         N++;
-        if (counter > 16) {
-            for (int i = 0; i < 16; i++)
+        if (counter > 32) {
+            for (int i = 0; i < 0; i++)
                 try {
                     loadEngine.loadTreeIndexPageInBuffer(i, order, keyType);
                 } catch (ReadPageException e) {
@@ -221,6 +221,7 @@ class BTree<Key extends Comparable<Object>, Value> {
 
         Node rootNode = getRoot();
         rootNode.setID(incCounter());
+        rootNode.dirty = true;
 
         Node t = createNode(2, order, rootID);
         t.children[0] = new Entry(rootNode.children[0].key, null, rootNode.pageId);
@@ -267,10 +268,17 @@ class BTree<Key extends Comparable<Object>, Value> {
             h.children[i] = h.children[i - 1];
         h.children[j] = t;
         h.currLen++;
-        if (h.currLen < order)
+        if (h.currLen < order) {
+            int bufferPos = loadEngine.loadIndexPageInBuffer(h, order, keyType);
+            loadEngine.storeIndexPageInFile(bufferPos, keyType);
             return null;
-        else
-            return split(h);
+        }
+        else {
+            Node result = split(h);
+            int bufferPos = loadEngine.loadIndexPageInBuffer(h, order, keyType);
+            loadEngine.storeIndexPageInFile(bufferPos, keyType);
+            return result;
+        }
     }
 
 
@@ -283,6 +291,7 @@ class BTree<Key extends Comparable<Object>, Value> {
         return t;
     }
 
+    @Override
     public String toString() {
         return "";
 //        return toString(getRoot(), height, "") + "\n";

@@ -145,7 +145,6 @@ public class mainTest {
         String querySecond = "Insert into db." + tableName + "(name, age, salary) values (\"Ann\", 35, 47412.0)";
         Statement statementFirst = TestUtils.createStatement(sqlParser, queryFirst);
         Statement statementSecond = TestUtils.createStatement(sqlParser, querySecond);
-        // ((Conditions) statementFirst.getParam("conditions")).getValues().get(2) = salary + 5 * i;
 
         for (int i = 0; i < TEST_SIZE; ++i) {
             manager.insert(statementFirst.getStringParam("table_name"), (Conditions) statementFirst.getParam("conditions"));
@@ -189,6 +188,43 @@ public class mainTest {
                 tableName, default_salary + TEST_SIZE / 2);
         count = TestUtils.runSelect(manager, sqlParser, queryCountSecond, frequency);
         assertEquals(TEST_SIZE / 2, count);
+
+    }
+
+    @Test
+    public void insertCompareTestDifferentRecords() {
+        final int insertCount = 1_000_000; // different records
+
+        String tableName = "testTable";
+        Column ageColumn = new Column("Age", new Type(BaseType.INT));
+        Column nameColumn = new Column("Name", Type.createType("varchar", 20));
+        List<Column> columns = new ArrayList<>();
+        columns.add(ageColumn);
+        columns.add(nameColumn);
+        manager.createTable(tableName, columns);
+
+        SQLParser sqlParser = new SQLParser(manager);
+        String query = "Insert into db." + tableName + " (name, age) values (\"Petr\", 0)";
+        Statement statement = TestUtils.createStatement(sqlParser, query);
+
+        final int step = 10;
+
+        for (int i = 0; i < insertCount; i++) {
+            ((Conditions) statement.getParam("conditions")).getValues().get(1).setValue((Comparable<Object>) (Object) (i * step));
+            manager.insert(statement.getStringParam("table_name"), (Conditions) statement.getParam("conditions"));
+        }
+
+        final int range = 10;
+        for (int i = 0; i < insertCount / 100; i++) {
+            query = String.format("Select %1$s.age, %1$s.name from db.%1$s " +
+                    "where age > %2$d and age <= %3$d", tableName, i * 10, i * 10 + range * step);
+            int count = TestUtils.runSelect(manager, sqlParser, query, null);
+            if (count != range) {
+                System.out.println(manager.getTable(tableName).getIndex().toString());
+                break;
+            }
+            assertEquals(range, count);
+        }
 
     }
 

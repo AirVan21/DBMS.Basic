@@ -15,7 +15,6 @@ import java.io.RandomAccessFile;
  */
 public class BTreeSerializer {
     public static TreeIndex deserialize(String fileName, LoadEngine loadEngine, Table table) {
-        BTreeDB bTree = new BTreeDB(table, loadEngine, null);
         try {
             RandomAccessFile file = new RandomAccessFile(fileName, "rw");
 
@@ -24,7 +23,10 @@ public class BTreeSerializer {
                 throw new IllegalArgumentException();
 
             int treeOrder = file.readInt();
-            if (treeOrder != bTree.getOrder())
+            int rightOrder = BTreeSerializer.ENTRY_COUNT;
+            if (rightOrder % 2 != 0)
+                rightOrder++;
+            if (treeOrder != rightOrder)
                 throw new IllegalArgumentException();
 
             int rootID = file.readInt();
@@ -40,13 +42,16 @@ public class BTreeSerializer {
 
             readNodePage(rootID, table, treeOrder, loadEngine, file, column.getType(), false);
 
-            bTree = new BTreeDB(table, loadEngine, column.getType(), rootID);
+            BTreeDB bTree = new BTreeDB(table, loadEngine, column.getType(), rootID);
 
             bTree.setHeight(height);
             bTree.setN(N);
             bTree.setCounter(counter);
 
-            return new TreeIndex(loadEngine, table, column, bTree);
+            TreeIndex result = new TreeIndex(loadEngine, table, column, bTree);
+            result.fillLeafNodes(bTree.getRoot());
+            result.setFilled(true);
+            return result;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -89,7 +94,7 @@ public class BTreeSerializer {
             file.writeInt(treeIndex.column.getName().length() * Utils.getCharByteSize());
             file.writeChars(treeIndex.column.getName());
 
-            writeNodePage(bTree.getRoot(), loadEngine, file, treeIndex.column.getType());
+            //writeNodePage(bTree.getRoot(), loadEngine, file, treeIndex.column.getType());
 
             file.close();
         } catch (IOException e) {
@@ -138,12 +143,12 @@ public class BTreeSerializer {
         int nodeID = file.readInt();
         int nodeCurrLen = file.readInt();
         Node result = new Node(table, nodeID, nodeCurrLen, order);
+        result.dirty = false;
 
         for (int i = 0; i < nodeCurrLen; i++) {
             file.seek(nodePos + Utils.getIntByteSize() * 2 + i * ENTRY_SIZE);
             result.children[i] = readEntry(table, order, loadEngine, file, keyType, onePage);
         }
-        result.dirty = false;
         return loadEngine.loadIndexPageInBuffer(result, order, keyType);
     }
 
@@ -176,7 +181,7 @@ public class BTreeSerializer {
             entry.val = null;
         entry.nextID = file.readInt();
         if (entry.nextID > -1 && !onePage)
-            entry.nextID = readNodePage(entry.nextID, table, order, loadEngine, file, keyType, onePage);
+            readNodePage(entry.nextID, table, order, loadEngine, file, keyType, onePage);
         return entry;
     }
 }

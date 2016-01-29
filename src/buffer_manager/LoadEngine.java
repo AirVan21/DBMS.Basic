@@ -97,6 +97,8 @@ public class LoadEngine {
     */
     public void writeMetaPage(Table table) {
         try {
+            tableFile.close();
+            tableFile = new RandomAccessFile(table.getFileName(), "rw");
             if (tableFile.length() < Page.PAGE_SIZE) {
                 tableFile.setLength(Page.PAGE_SIZE);
             }
@@ -202,8 +204,8 @@ public class LoadEngine {
         int bufferPos = findIndexPage(page.pageId);
         if (bufferPos == -1) {
             bufferPos = nextBufferPos(true);
-            //if (pageBuffer.get(bufferPos).dirty)
-            storePage(bufferPos, order, keyType);
+            if (pageBuffer.get(bufferPos).dirty)
+                storePage(bufferPos, order, keyType);
         }
         pageBuffer.set(bufferPos, page);
         return bufferPos;
@@ -276,9 +278,9 @@ public class LoadEngine {
     public void loadPageFromFile(Page fillPage) {
         try {
             tableFile.seek(fillPage.pageId * Page.PAGE_SIZE);
-            tableFile.readInt();
+            int id = tableFile.readInt();
             fillPage.deleted = tableFile.readBoolean();
-            fillPage.dirty = tableFile.readBoolean();
+            tableFile.readBoolean();
             fillPage.full = tableFile.readBoolean();
             int recordCount = tableFile.readInt();
             for (int i = 0; i < recordCount; ++i) {
@@ -309,6 +311,7 @@ public class LoadEngine {
                 fillPage.addRecord(record);
             }
 
+            fillPage.dirty = false;
             // deleteMask
             int bytesInDeleteMask = tableFile.readInt();
             byte[] deleteMaskBytes = new byte[bytesInDeleteMask];
@@ -417,7 +420,7 @@ public class LoadEngine {
 
     public void flushTableData() {
         for (int i = 0; i < pageBuffer.size(); i++) {
-            if (pageBuffer.get(i).table == table)
+            if (pageBuffer.get(i).table == table && pageBuffer.get(i).dirty)
                 if (pageBuffer.get(i).isIndex())
                     storeIndexPageInFile(i, table.getIndex().getKeyType());
                 else

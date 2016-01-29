@@ -26,6 +26,7 @@ public class TreeIndex extends AbstractIndex {
     BTreeDB bTree; //key column value and file offset
     BTreeIterator bTreeIterator;
     List<Integer> leafNodes;
+    boolean filled;
 
     public TreeIndex(LoadEngine loadEngine, Table table, Column column) {
         this(loadEngine, table, column, createBTree(loadEngine, table, column));
@@ -82,6 +83,7 @@ public class TreeIndex extends AbstractIndex {
 //            }
         }
         fillLeafNodes(bTree.getRoot());
+        filled = true;
     }
 
     public TreeIndex(LoadEngine loadEngine, Table table, Column column, BTreeDB bTree) {
@@ -90,14 +92,19 @@ public class TreeIndex extends AbstractIndex {
         this.loadEngine = loadEngine;
         this.bTree = bTree;
         this.leafNodes = new ArrayList<>();
+        filled = false;
     }
 
     @Override
     public void setIterator(Conditions conditions) {
+        if (!filled) {
+            fillLeafNodes(bTree.getRoot());
+            filled = true;
+        }
         bTreeIterator = new BTreeIterator(this, bTree, loadEngine, conditions, leafNodes);
     }
 
-    private void fillLeafNodes(Node node) {
+    public void fillLeafNodes(Node node) {
         if (node.currLen > 0)
             if (node.children[0].nextID == -1)
                 leafNodes.add(node.getID());
@@ -112,7 +119,10 @@ public class TreeIndex extends AbstractIndex {
 
     @Override
     public boolean next() {
-        return bTreeIterator.next();
+        if (bTreeIterator.next())
+            return true;
+//        filled = false;
+        return false;
     }
 
     @Override
@@ -132,5 +142,14 @@ public class TreeIndex extends AbstractIndex {
     @Override
     public Type getKeyType() {
         return column.getType();
+    }
+
+    public void setFilled(boolean filled) {
+        this.filled = filled;
+    }
+
+    @Override
+    public String toString() {
+        return bTree.toString();
     }
 }

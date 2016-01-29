@@ -56,7 +56,7 @@ public class XMLBuilder {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            createXMLDocument();
+            createXMLDocument(pathToSysTable);
             storeXMLDocument();
         }
     }
@@ -175,7 +175,7 @@ public class XMLBuilder {
     /*
         Creates Sys.Database XML file from scratch
      */
-    private void createXMLDocument()
+    private void createXMLDocument(String pathToSysTable)
     {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -197,9 +197,8 @@ public class XMLBuilder {
             tableElement.appendChild(tableName);
 
             // "path" field in table record
-            Path filePath = Paths.get("data//root_db.ndb");
             Element tablePath = sysTable.createElement("path");
-            tablePath.appendChild(sysTable.createTextNode(filePath.toAbsolutePath().toString()));
+            tablePath.appendChild(sysTable.createTextNode(pathToSysTable));
             tableElement.appendChild(tablePath);
 
         } catch (ParserConfigurationException e) {

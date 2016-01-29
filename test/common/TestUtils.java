@@ -64,6 +64,20 @@ public class TestUtils {
         }
     }
 
+    public static int runUpdate(TableManager manager, SQLParser sqlParser, String query) {
+        try {
+            Statement statement = sqlParser.parse(query);
+            int count = manager.update(statement.getStringParam("table_name"),
+                    (Conditions) statement.getParam("conditions"),
+                    (Conditions) statement.getParam("assignments"));
+            System.out.println(count);
+            return count;
+        } catch (QueryException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
     public static Statement createStatement(SQLParser sqlParser, String query)
     {
         Statement statement = null;

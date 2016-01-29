@@ -7,6 +7,7 @@ import commands_runner.indexes.btree.IndexType;
 import common.Column;
 import common.ColumnSelect;
 import common.FromClause;
+import common.conditions.Condition;
 import common.conditions.Conditions;
 import common.exceptions.QueryException;
 import common.table_classes.Page;
@@ -14,6 +15,7 @@ import common.table_classes.Record;
 import common.table_classes.Table;
 import common.xml.SysInfoRecord;
 import common.xml.XMLBuilder;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -174,5 +176,34 @@ public class HeapBufferManager extends AbstractBufferManager {
             return removedCount;
         }
         throw new QueryException("Trying select from table which do not exist!");
+    }
+
+    @Override
+    public int update(Table table, Conditions conditions, Conditions assignments) throws QueryException {
+        if (sysTable.isExist(table.getName())) {
+            int pageNum = 1;
+            loadEngine.switchToTable(table);
+            List<Pair<Integer, Object>> assignmentList = new ArrayList<>();
+            for (Condition condition : assignments.getValues()) {
+                assignmentList.add(new Pair<Integer, Object>(table.getColumnIndex(condition.getColumn()), condition.getValue()));
+            }
+
+            Page currentPage = loadEngine.getPageFromBuffer(pageNum);
+            int updatedCount = 0;
+            while (loadEngine.sizeInPages() >= pageNum) {
+                if (currentPage != null) {
+                    int updatedFromPage = currentPage.updateRecords(conditions, assignmentList);
+                    if (updatedFromPage > 0) {
+                        updatedCount += updatedFromPage;
+                        currentPage.dirty = true;
+                    }
+                }
+                pageNum += 1;
+                loadEngine.switchToTable(table);
+                currentPage = loadEngine.getPageFromBuffer(pageNum);
+            }
+            return updatedCount;
+        }
+        throw new QueryException("Trying update table which do not exist!");
     }
 }

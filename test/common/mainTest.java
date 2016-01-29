@@ -289,7 +289,30 @@ public class mainTest {
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
         count = TestUtils.runSelect(manager, sqlParser, query, 1000);
+        assertEquals(TEST_SIZE, count);
+    }
+
+    @Test
+    public void updateTest() {
+        String tableName = "testTable";
+        createTableRightColumnsTest();
+        Table table = manager.getTable(tableName);
+        assertNotNull(table);
+        SQLParser sqlParser = new SQLParser(manager);
+
+        String query = "Insert into db." + tableName + String.format(" (name, age, salary) values (\"Petr\", 22, %1$d)", 10000);
+        TestUtils.runInsert(manager, sqlParser, query);
+
+        query = "Insert into db." + tableName + String.format(" (name, age, salary) values (\"Anna\", 23, %1$d)", 15000);
+        TestUtils.runInsert(manager, sqlParser, query);
+
+        query = "Update " + tableName + " set age = 23, salary = 14000 where age = 22 and name = \"Petr\"";
+        int count = TestUtils.runUpdate(manager, sqlParser, query);
         assertEquals(1, count);
+
+        query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s", tableName);
+        count = TestUtils.runSelect(manager, sqlParser, query, 1);
+        assertEquals(2, count);
     }
 
     @After

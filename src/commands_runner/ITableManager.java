@@ -16,6 +16,7 @@ public interface ITableManager {
     void insert(String tableName, Conditions assignments);
     ICursor select(FromClause fromClause, List<ColumnSelect> columns, Conditions conditions);
     int delete(String tableName, Conditions conditions);
+    int update(String tableName, Conditions conditions, Conditions assignments);
 
     void loadTables();
 

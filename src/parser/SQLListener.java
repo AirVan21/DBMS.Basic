@@ -274,4 +274,39 @@ public class SQLListener extends SQLiteBaseListener {
 
     }
 
+
+    @Override public void exitUpdate_stmt(SQLiteParser.Update_stmtContext ctx) {
+        statementType = StatementType.UPDATE;
+        try {
+            Table table = tableManager.getTable(ctx.qualified_table_name().getText());
+            params.put("table_name", table.getName());
+
+            Conditions assignments = new Conditions();
+
+            List<SQLiteParser.Column_nameContext> setColumnNames = ctx.column_name();
+            for (int i = 0; i < setColumnNames.size(); i++) {
+                SQLiteParser.Column_nameContext column_nameContext = setColumnNames.get(i);
+                Column column = table.getColumn(column_nameContext.getText());
+                String valueText = ctx.expr(i).getText();
+                Object value = column.getType().castFromString(valueText);
+                if (value == null)
+                        throw new QueryException(String.format("Invalid value '%s' at column '%s', use type %s",
+                                valueText, column.getName(), column.getType().getName()));
+                Condition condition = new Condition(table, column, ComparisonType.EQUAL, value);
+                assignments.addValue(condition);
+            }
+            params.put("assignments", assignments);
+
+            for (int i = setColumnNames.size(); i < ctx.expr().size(); i++) {
+                FromClause fromClause = new FromClause(table, null);
+                params.put("conditions", getCondition(fromClause, ctx.expr(i)));
+            }
+
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
 }

@@ -136,4 +136,17 @@ public class TableManager implements ITableManager, AutoCloseable {
         }
         return 0;
     }
+
+    @Override
+    public int update(String tableName, Conditions conditions, Conditions assignments) {
+        if (!tablesMap.containsKey(tableName))
+            throw new IllegalArgumentException(String.format("Table %s not found", tableName));
+        Table table = tablesMap.get(tableName);
+        try {
+            return bufferManager.update(table, conditions, assignments);
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

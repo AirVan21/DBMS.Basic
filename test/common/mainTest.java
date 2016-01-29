@@ -289,7 +289,7 @@ public class mainTest {
 
         query = String.format("Select %1$s.age, %1$s.name, %1$s.salary from db.%1$s where %1$s.age = 22", tableName);
         count = TestUtils.runSelect(manager, sqlParser, query, 1000);
-        assertEquals(TEST_SIZE, count);
+        assertEquals(1, count);
     }
 
     @Test

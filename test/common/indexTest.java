@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class indexTest {
 
-    private final boolean UPDATE_FLAG = true;
+    private final boolean UPDATE_FLAG = false;
     private TableManager manager = null;
     private final String dbFolder = "dataTest//";
 

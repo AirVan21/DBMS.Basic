@@ -25,7 +25,6 @@ public class Page {
     public boolean dirty;
     public boolean full;
     public Table table;
-    public ByteBuffer pageBuffer;
     public BitSet deletedMask;
 
     // KBytes
@@ -43,8 +42,6 @@ public class Page {
         maxRecordCount = calcMaxRecordCount(table.recordSize);
         records = new ArrayList<>();
         deletedMask = new BitSet(maxRecordCount);
-        pageBuffer = ByteBuffer.allocate(PAGE_SIZE);
-        initRecordPageBuffer();
     }
 
     public static int calcMaxRecordCount(int recordSize) {
@@ -71,24 +68,13 @@ public class Page {
 
     public void addRecord(Record record) {
         records.add(record);
-        addRecordToPageBuffer(record);
         dirty = true;
         if (records.size() >= maxRecordCount)
             full = true;
-        updateRecordPageBuffer();
-    }
-
-    public void prepareForIO() {
-        byte[] deleteMaskBytes = Utils.toByteArray(deletedMask);
-        pageBuffer.putInt(deleteMaskBytes.length);
-        pageBuffer.put(deleteMaskBytes);
-        updateRecordPageBuffer();
     }
 
     public void refreshPage() {
         records.clear();
-        pageBuffer.clear();
-        initRecordPageBuffer();
     }
 
     public int getRecordsCount() {
@@ -126,48 +112,5 @@ public class Page {
 
     }
 
-    private void addRecordToPageBuffer(Record record) {
-        List<Column> columns = table.getColumns();
-        for (int i = 0; i < table.getColumns().size(); i++) {
-            Object value = record.getColumnValue(i);
-            pageBuffer.putInt(columns.get(i).getType().getBaseType().getTypeNumber());
-            switch (columns.get(i).getType().getBaseType()) {
-                case VARCHAR:
-                    ByteBuffer stringBuffer = ByteBuffer.allocate(Type.MAX_STRING_BYTE_SIZE);
-                    try {
-                        stringBuffer.put(((String) value).getBytes("UTF-16"));
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                    pageBuffer.put(stringBuffer.array());
-                    break;
-                case DOUBLE:
-                    pageBuffer.putDouble((double) value);
-                    break;
-                case INT:
-                    pageBuffer.putInt((int) value);
-                    break;
-            }
-        }
-    }
-
-    private void initRecordPageBuffer() {
-        // Setting default meta-information
-        pageBuffer.putInt(pageId);
-        pageBuffer.put((byte) (deleted ? 1 : 0));
-        pageBuffer.put((byte) (dirty   ? 1 : 0));
-        pageBuffer.put((byte) (full    ? 1 : 0));
-        pageBuffer.putInt(records.size());
-    }
-
-    private void updateRecordPageBuffer() {
-        // Updating default meta-information
-        final int INT_SIZE = Utils.getIntByteSize();
-        pageBuffer.putInt(0, pageId);
-        pageBuffer.put(INT_SIZE,     (byte) (deleted ? 1 : 0));
-        pageBuffer.put(INT_SIZE + 1, (byte) (dirty   ? 1 : 0));
-        pageBuffer.put(INT_SIZE + 2, (byte) (full    ? 1 : 0));
-        pageBuffer.putInt(INT_SIZE + 3, records.size());
-    }
 
 }
